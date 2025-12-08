@@ -3,136 +3,16 @@
   "WorkspaceRootPath": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\auth\\itokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\auth\\itokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{CF28889A-DCE7-42AA-B59D-07B280902B08}|src\\Modules\\Tenants\\Tenants.Api\\Tenants.Api.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\modules\\tenants\\tenants.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{CF28889A-DCE7-42AA-B59D-07B280902B08}|src\\Modules\\Tenants\\Tenants.Api\\Tenants.Api.csproj|solutionrelative:src\\modules\\tenants\\tenants.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\auth\\iauthorizationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\auth\\iauthorizationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{BF35B6CD-356D-451E-851D-AE6B95A02420}|src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\modules\\tenants\\tenants.infrastructure\\persistence\\designtimedbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BF35B6CD-356D-451E-851D-AE6B95A02420}|src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj|solutionrelative:src\\modules\\tenants\\tenants.infrastructure\\persistence\\designtimedbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\users\\queries\\getuserbyid\\getuserbyidqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\users\\queries\\getuserbyid\\getuserbyidqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\users\\queries\\getuserbyid\\userresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\users\\queries\\getuserbyid\\userresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\users\\queries\\getuserbyid\\getuserbyidquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\users\\queries\\getuserbyid\\getuserbyidquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\users\\queries\\getusers\\usersresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\users\\queries\\getusers\\usersresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\repositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\tasks\\queries\\gettaskbyid\\gettaskbyidqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\tasks\\queries\\gettaskbyid\\gettaskbyidqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\auth\\iusercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\auth\\iusercontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\auth\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\auth\\tokenservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\auth\\permissionchecker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\auth\\permissionchecker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\auth\\ipermissionchecker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\auth\\ipermissionchecker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\auth\\jwttokengenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\auth\\jwttokengenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2862A02D-948D-4CB3-BC8E-709498966859}|src\\SharedKernel\\SharedKernel.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\sharedkernel\\entity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2862A02D-948D-4CB3-BC8E-709498966859}|src\\SharedKernel\\SharedKernel.csproj|solutionrelative:src\\sharedkernel\\entity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\domain\\enums\\permission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|solutionrelative:src\\domain\\enums\\permission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\domain\\permissions\\permissionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|solutionrelative:src\\domain\\permissions\\permissionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\domain\\permissions\\rolepermission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{6F8B7095-9775-40F1-98F8-D0B77584B4DC}|src\\Domain\\Domain.csproj|solutionrelative:src\\domain\\permissions\\rolepermission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\permissions\\commands\\assignpermission\\assignpermissioncommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\permissions\\commands\\assignpermission\\assignpermissioncommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\data\\ishardmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\data\\ishardmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\auth\\commands\\login\\logincommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\auth\\commands\\login\\logincommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\database\\domaineventinterceptor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\database\\domaineventinterceptor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\database\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\database\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\repositories\\itaskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\repositories\\itaskrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\messaging\\iqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\messaging\\iqueryhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\messaging\\iquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\messaging\\iquery.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\messaging\\idomaineventdispatcher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\messaging\\idomaineventdispatcher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\messaging\\icommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\messaging\\icommandhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\messaging\\icommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\messaging\\icommand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\infrastructure\\database\\sharding\\dbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3D745DFE-AF9A-E111-755D-FD3FFF280728}|src\\Infrastructure\\Infrastructure.csproj|solutionrelative:src\\infrastructure\\database\\sharding\\dbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\data\\idbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\data\\idbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\repositories\\iattachmentrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\repositories\\iattachmentrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstraction\\data\\iapplicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstraction\\data\\iapplicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\application\\abstractions\\data\\ishardselector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{85CE8A68-673F-4203-B4DC-3FC9B0C4B895}|src\\Application\\Application.csproj|solutionrelative:src\\application\\abstractions\\data\\ishardselector.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{BF35B6CD-356D-451E-851D-AE6B95A02420}|src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj|d:\\programing\\csharp\\aspnet\\nimbussite\\src\\modules\\tenants\\tenants.infrastructure\\tenants.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{BF35B6CD-356D-451E-851D-AE6B95A02420}|src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj|solutionrelative:src\\modules\\tenants\\tenants.infrastructure\\tenants.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -142,203 +22,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 3,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ITokenService.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\ITokenService.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Auth\\ITokenService.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\ITokenService.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Auth\\ITokenService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T21:38:36.433Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "UserResponse.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\UserResponse.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Users\\Queries\\GetUserById\\UserResponse.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\UserResponse.cs",
-              "RelativeToolTip": "src\\Application\\Users\\Queries\\GetUserById\\UserResponse.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:40:30.62Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "UsersResponse.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUsers\\UsersResponse.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Users\\Queries\\GetUsers\\UsersResponse.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUsers\\UsersResponse.cs",
-              "RelativeToolTip": "src\\Application\\Users\\Queries\\GetUsers\\UsersResponse.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAA9AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:40:43.189Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "GetUserByIdQueryHandler.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQueryHandler.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQueryHandler.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQueryHandler.cs",
-              "RelativeToolTip": "src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQueryHandler.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABIAAAAcAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:39:16.206Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "GetUserByIdQuery.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQuery.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQuery.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQuery.cs",
-              "RelativeToolTip": "src\\Application\\Users\\Queries\\GetUserById\\GetUserByIdQuery.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAABKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:39:12.433Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "IAuthorizationService.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IAuthorizationService.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Auth\\IAuthorizationService.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IAuthorizationService.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Auth\\IAuthorizationService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:18:25.636Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "GetTaskByIdQueryHandler.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Tasks\\Queries\\GetTaskById\\GetTaskByIdQueryHandler.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Tasks\\Queries\\GetTaskById\\GetTaskByIdQueryHandler.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Tasks\\Queries\\GetTaskById\\GetTaskByIdQueryHandler.cs",
-              "RelativeToolTip": "src\\Application\\Tasks\\Queries\\GetTaskById\\GetTaskByIdQueryHandler.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAATAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:19:26.762Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "IUserRepository.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\IUserRepository.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Repositories\\IUserRepository.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\IUserRepository.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Repositories\\IUserRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:59.422Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "IPermissionChecker.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IPermissionChecker.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Auth\\IPermissionChecker.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IPermissionChecker.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Auth\\IPermissionChecker.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:17:37.345Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "IUserContext.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IUserContext.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Auth\\IUserContext.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Auth\\IUserContext.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Auth\\IUserContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:17:25.834Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "TokenService.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\TokenService.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Auth\\TokenService.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\TokenService.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Auth\\TokenService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:17:14.911Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "PermissionChecker.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\PermissionChecker.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Auth\\PermissionChecker.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\PermissionChecker.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Auth\\PermissionChecker.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:15:51.073Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "JwtTokenGenerator.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\JwtTokenGenerator.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Auth\\JwtTokenGenerator.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Auth\\JwtTokenGenerator.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Auth\\JwtTokenGenerator.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T18:06:23.128Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "Entity.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\SharedKernel\\Entity.cs",
-              "RelativeDocumentMoniker": "src\\SharedKernel\\Entity.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\SharedKernel\\Entity.cs",
-              "RelativeToolTip": "src\\SharedKernel\\Entity.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:54:58.27Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "Permission.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Enums\\Permission.cs",
-              "RelativeDocumentMoniker": "src\\Domain\\Enums\\Permission.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Enums\\Permission.cs",
-              "RelativeToolTip": "src\\Domain\\Enums\\Permission.cs",
-              "ViewState": "AgIAAA4AAAAAAAAAAAAQwBsAAAAWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:28:09.309Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{905da7d1-18fd-4a46-8d0f-a5ff58ada9de}"
@@ -349,237 +34,40 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "AssignPermissionCommandHandler.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Permissions\\Commands\\AssignPermission\\AssignPermissionCommandHandler.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Permissions\\Commands\\AssignPermission\\AssignPermissionCommandHandler.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Permissions\\Commands\\AssignPermission\\AssignPermissionCommandHandler.cs",
-              "RelativeToolTip": "src\\Application\\Permissions\\Commands\\AssignPermission\\AssignPermissionCommandHandler.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAxwCQAAAAFAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "DesignTimeDbContextFactory.cs",
+              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Infrastructure\\Persistence\\DesignTimeDbContextFactory.cs",
+              "RelativeDocumentMoniker": "src\\Modules\\Tenants\\Tenants.Infrastructure\\Persistence\\DesignTimeDbContextFactory.cs",
+              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Infrastructure\\Persistence\\DesignTimeDbContextFactory.cs",
+              "RelativeToolTip": "src\\Modules\\Tenants\\Tenants.Infrastructure\\Persistence\\DesignTimeDbContextFactory.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAK4AAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:23:07.637Z",
+              "WhenOpened": "2025-12-08T19:50:53.888Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Api\\Program.cs",
+              "RelativeDocumentMoniker": "src\\Modules\\Tenants\\Tenants.Api\\Program.cs",
+              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Api\\Program.cs",
+              "RelativeToolTip": "src\\Modules\\Tenants\\Tenants.Api\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-08T19:45:24.916Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "IShardManager.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IShardManager.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Data\\IShardManager.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IShardManager.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Data\\IShardManager.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-05T20:42:19.034Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "PermissionConfiguration.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Permissions\\PermissionConfiguration.cs",
-              "RelativeDocumentMoniker": "src\\Domain\\Permissions\\PermissionConfiguration.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Permissions\\PermissionConfiguration.cs",
-              "RelativeToolTip": "src\\Domain\\Permissions\\PermissionConfiguration.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAqAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:41:08.105Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "RolePermission.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Permissions\\RolePermission.cs",
-              "RelativeDocumentMoniker": "src\\Domain\\Permissions\\RolePermission.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Domain\\Permissions\\RolePermission.cs",
-              "RelativeToolTip": "src\\Domain\\Permissions\\RolePermission.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAsAAAAPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:41:09.239Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "DomainEventInterceptor.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\DomainEventInterceptor.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Database\\DomainEventInterceptor.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\DomainEventInterceptor.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Database\\DomainEventInterceptor.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:13:02.022Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "ApplicationDbContext.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\ApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Database\\ApplicationDbContext.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\ApplicationDbContext.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Database\\ApplicationDbContext.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAABUAAABKAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:13:39.884Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 24,
-              "Title": "IQuery.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IQuery.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Messaging\\IQuery.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IQuery.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Messaging\\IQuery.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:30.723Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
-              "Title": "LoginCommand.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Auth\\Commands\\Login\\LoginCommand.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Auth\\Commands\\Login\\LoginCommand.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Auth\\Commands\\Login\\LoginCommand.cs",
-              "RelativeToolTip": "src\\Application\\Auth\\Commands\\Login\\LoginCommand.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-05T20:42:45.964Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 25,
-              "Title": "IDomainEventDispatcher.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IDomainEventDispatcher.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Messaging\\IDomainEventDispatcher.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IDomainEventDispatcher.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Messaging\\IDomainEventDispatcher.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T17:07:27.789Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 27,
-              "Title": "ICommand.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\ICommand.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Messaging\\ICommand.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\ICommand.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Messaging\\ICommand.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:07.999Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "IQueryHandler.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IQueryHandler.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Messaging\\IQueryHandler.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\IQueryHandler.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Messaging\\IQueryHandler.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:35.753Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 22,
-              "Title": "ITaskRepository.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\ITaskRepository.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Repositories\\ITaskRepository.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\ITaskRepository.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Repositories\\ITaskRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:47:23.738Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 28,
-              "Title": "DbContextFactory.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\Sharding\\DbContextFactory.cs",
-              "RelativeDocumentMoniker": "src\\Infrastructure\\Database\\Sharding\\DbContextFactory.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Infrastructure\\Database\\Sharding\\DbContextFactory.cs",
-              "RelativeToolTip": "src\\Infrastructure\\Database\\Sharding\\DbContextFactory.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:48:06.402Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 26,
-              "Title": "ICommandHandler.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\ICommandHandler.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Messaging\\ICommandHandler.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Messaging\\ICommandHandler.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Messaging\\ICommandHandler.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:18.85Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 30,
-              "Title": "IAttachmentRepository.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\IAttachmentRepository.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Repositories\\IAttachmentRepository.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Repositories\\IAttachmentRepository.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Repositories\\IAttachmentRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:48.364Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 29,
-              "Title": "IDbContextFactory.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IDbContextFactory.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Data\\IDbContextFactory.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IDbContextFactory.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Data\\IDbContextFactory.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-05T20:42:08.649Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 31,
-              "Title": "IApplicationDbContext.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Data\\IApplicationDbContext.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstraction\\Data\\IApplicationDbContext.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstraction\\Data\\IApplicationDbContext.cs",
-              "RelativeToolTip": "src\\Application\\Abstraction\\Data\\IApplicationDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-07T16:46:03.266Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 32,
-              "Title": "IShardSelector.cs",
-              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IShardSelector.cs",
-              "RelativeDocumentMoniker": "src\\Application\\Abstractions\\Data\\IShardSelector.cs",
-              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Application\\Abstractions\\Data\\IShardSelector.cs",
-              "RelativeToolTip": "src\\Application\\Abstractions\\Data\\IShardSelector.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-05T20:42:27.964Z",
-              "EditorCaption": ""
+              "DocumentIndex": 2,
+              "Title": "Tenants.Infrastructure.csproj",
+              "DocumentMoniker": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj",
+              "RelativeDocumentMoniker": "src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj",
+              "ToolTip": "D:\\Programing\\CSharp\\aspnet\\NimbusSite\\src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj",
+              "RelativeToolTip": "src\\Modules\\Tenants\\Tenants.Infrastructure\\Tenants.Infrastructure.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-12-08T19:44:45.442Z"
             }
           ]
         }
