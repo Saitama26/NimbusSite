@@ -1,12 +1,20 @@
 using Common.Infrastructure.Extensions;
 using DotNetEnv;
+using Microsoft.EntityFrameworkCore;
 using Tenants.Application.Extensions;
 using Tenants.Infrastructure.Extensions;
+using Tenants.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load .env if present (optional, local dev)
-Env.Load(".env");
+// Try loading from Tenants.Api folder first, then from root
+var envPath = Path.Combine(AppContext.BaseDirectory, ".env");
+if (!File.Exists(envPath))
+{
+    envPath = ".env";
+}
+Env.Load(envPath);
 
 // Add services
 builder.Services
@@ -39,14 +47,33 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Swagger
+// Применяем миграции при старте (только в Development)
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<TenantsDbContext>();
+        try
+        {
+            dbContext.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while migrating the database.");
+            // Не падаем, если миграции не применились - возможно БД еще не готова
+        }
+    }
+}
+
+// Swagger - всегда включаем
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tenants API v1");
     c.RoutePrefix = string.Empty; // Swagger UI будет доступен по корневому пути
     c.DisplayRequestDuration();
-    c.EnableTryItOutByDefault(); // Включаем кнопку "Try it out" по умолчанию
+    c.EnableTryItOutByDefault(); 
     c.EnableDeepLinking();
     c.EnableFilter();
     c.ShowExtensions();

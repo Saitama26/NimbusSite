@@ -38,11 +38,11 @@ public class TenantsController : ControllerBase
     public async Task<ActionResult<List<TenantListItemDto>>> GetTenants(CancellationToken cancellationToken)
     {
         var query = new GetTenantsQuery();
-        var result = await _sender.Send<IQueryable<TenantListItemDto>>(query, cancellationToken);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (!result.IsSuccess)
         {
-            return BadRequest(new { error = result.Error?.Description ?? "Failed to get tenants" });
+            return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
         return Ok(result.Value?.ToList() ?? new List<TenantListItemDto>());
@@ -61,14 +61,18 @@ public class TenantsController : ControllerBase
     public async Task<ActionResult<TenantDto>> GetTenantById(Guid tenantId, CancellationToken cancellationToken)
     {
         var query = new GetTenantByIdQuery(tenantId);
-        var result = await _sender.Send<TenantDto>(query, cancellationToken);
+        var result = await _sender.Send(query, cancellationToken);
 
         if (!result.IsSuccess)
         {
-            return NotFound(new { error = result.Error?.Description ?? "Tenant not found" });
+            if (result.Error?.Type == Common.Domain.Results.ErrorType.NotFound)
+            {
+                return NotFound(result.Error.Description);
+            }
+            return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return Ok(result.Value);
+        return Ok(result.Value!);
     }
 
     /// <summary>
@@ -223,6 +227,20 @@ public class TenantsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private static int? MapStatus(Common.Domain.Results.Error? error)
+    {
+        if (error == null) return 500;
+        return error.Type switch
+        {
+            Common.Domain.Results.ErrorType.Validation => 400,
+            Common.Domain.Results.ErrorType.Unauthorized => 401,
+            Common.Domain.Results.ErrorType.Forbidden => 403,
+            Common.Domain.Results.ErrorType.NotFound => 404,
+            Common.Domain.Results.ErrorType.Conflict => 409,
+            _ => 500
+        };
     }
 }
 

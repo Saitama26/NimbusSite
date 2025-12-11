@@ -3,7 +3,7 @@ using Common.Domain.Events;
 namespace Common.Application.Abstractions.Events;
 
 /// <summary>
-/// Интерфейс для подписки на события из очереди сообщений (RabbitMQ/Kafka)
+/// Интерфейс для подписки на события из очереди сообщений (Kafka)
 /// Используется модулями для обработки событий от других модулей
 /// </summary>
 public interface IEventSubscriber

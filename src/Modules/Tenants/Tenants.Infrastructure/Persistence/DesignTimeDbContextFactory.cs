@@ -21,85 +21,16 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TenantsDbC
             ?? GetSolutionRootFromAssembly() 
             ?? Directory.GetCurrentDirectory();
 
-        // Загружаем .env или .env.template (не бросает, если файла нет)
-        // Пробуем несколько путей, начиная с корня решения
-        var envPaths = new[]
-        {
-            Path.Combine(basePath, ".env"),
-            Path.Combine(basePath, ".env.template"),
-            Path.Combine(Directory.GetCurrentDirectory(), ".env"),
-            Path.Combine(Directory.GetCurrentDirectory(), ".env.template"),
-            ".env",
-            ".env.template"
-        };
+        // Пробуем загрузить .env/.env.template (EnvLoader сам обработает отсутствие файла)
+        EnvLoader.Load();
 
-        bool envLoaded = false;
-        string? loadedEnvPath = null;
-        foreach (var envPath in envPaths)
-        {
-            if (File.Exists(envPath))
-            {
-                EnvLoader.Load(envPath);
-                loadedEnvPath = envPath;
-                envLoaded = true;
-                
-                // Дополнительно: явно устанавливаем переменные из .env в Environment,
-                // если DotNetEnv этого не сделал (на случай проблем с загрузкой)
-                try
-                {
-                    var envLines = File.ReadAllLines(envPath);
-                    foreach (var line in envLines)
-                    {
-                        var trimmedLine = line.Trim();
-                        if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith("#"))
-                            continue;
-
-                        var equalIndex = trimmedLine.IndexOf('=');
-                        if (equalIndex > 0)
-                        {
-                            var key = trimmedLine.Substring(0, equalIndex).Trim();
-                            var value = trimmedLine.Substring(equalIndex + 1).Trim();
-                            
-                            // Убираем кавычки, если есть
-                            if ((value.StartsWith("\"") && value.EndsWith("\"")) ||
-                                (value.StartsWith("'") && value.EndsWith("'")))
-                            {
-                                value = value.Substring(1, value.Length - 2);
-                            }
-                            
-                            // Устанавливаем в Environment, если еще не установлено
-                            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
-                            {
-                                Environment.SetEnvironmentVariable(key, value);
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                    // Игнорируем ошибки при чтении .env файла
-                }
-                
-                break; // Загружаем первый найденный файл
-            }
-        }
-        
-        // Если ни один файл не найден, все равно пробуем загрузить (EnvLoader обработает отсутствие файла)
-        if (!envLoaded)
-        {
-            EnvLoader.Load();
-        }
+        var tenantsApiPath = Path.Combine(basePath, "src", "Modules", "Tenants", "Tenants.Api");
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(basePath)
-            // Пробуем appsettings.json в корне (если есть)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            // Основной путь к appsettings модуля Tenants
-            .AddJsonFile(Path.Combine("src", "Modules", "Tenants", "Tenants.Api", "appsettings.json"), optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine("src", "Modules", "Tenants", "Tenants.Api", "appsettings.Development.json"), optional: true, reloadOnChange: false)
-            // Также пробуем прямой путь относительно текущей директории
-            .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "src", "Modules", "Tenants", "Tenants.Api", "appsettings.json"), optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "src", "Modules", "Tenants", "Tenants.Api", "appsettings.Development.json"), optional: true, reloadOnChange: false)
+            .AddJsonFile(Path.Combine(basePath, "appsettings.json"), optional: true, reloadOnChange: false)
+            .AddJsonFile(Path.Combine(tenantsApiPath, "appsettings.json"), optional: true, reloadOnChange: false)
+            .AddJsonFile(Path.Combine(tenantsApiPath, "appsettings.Development.json"), optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
@@ -116,12 +47,9 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TenantsDbC
             var searchedPaths = new[]
             {
                 Path.Combine(basePath, "appsettings.json"),
-                Path.Combine(basePath, "src", "Modules", "Tenants", "Tenants.Api", "appsettings.json"),
-                Path.Combine(basePath, "src", "Modules", "Tenants", "Tenants.Api", "appsettings.Development.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "src", "Modules", "Tenants", "Tenants.Api", "appsettings.json"),
-                Path.Combine(basePath, ".env"),
-                Path.Combine(Directory.GetCurrentDirectory(), ".env"),
-                ".env"
+                Path.Combine(tenantsApiPath, "appsettings.json"),
+                Path.Combine(tenantsApiPath, "appsettings.Development.json"),
+                Path.Combine(basePath, ".env")
             };
 
             var existingFiles = searchedPaths.Where(p => File.Exists(p)).ToList();
@@ -155,7 +83,6 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TenantsDbC
                 "in appsettings.json, environment variables, or .env file with a non-empty value.\n\n" +
                 $"Base path used: {basePath}\n" +
                 $"Current directory: {Directory.GetCurrentDirectory()}\n" +
-                (loadedEnvPath != null ? $"Loaded .env file: {loadedEnvPath}\n" : "No .env file was loaded.\n") +
                 "\nSearched configuration files:\n" +
                 (existingFiles.Any() 
                     ? $"Found: {string.Join("\n  ", existingFiles)}\n" 

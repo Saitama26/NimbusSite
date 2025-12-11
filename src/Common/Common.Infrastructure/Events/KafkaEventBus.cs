@@ -16,13 +16,21 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
 {
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaEventBus> _logger;
+    private readonly string _topicPrefix;
     private const string DefaultTopicPrefix = "domain-events";
 
     public KafkaEventBus(IConfiguration configuration, ILogger<KafkaEventBus> logger)
     {
         _logger = logger;
         
-        var bootstrapServers = configuration["Kafka:BootstrapServers"] ?? "localhost:9092";
+        // Try environment variable first, then configuration, then default
+        var bootstrapServers = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS")
+            ?? configuration["Kafka:BootstrapServers"]
+            ?? "localhost:9092";
+        
+        _topicPrefix = Environment.GetEnvironmentVariable("KAFKA_TOPIC_PREFIX")
+            ?? configuration["Kafka:TopicPrefix"]
+            ?? DefaultTopicPrefix;
 
         var producerConfig = new ProducerConfig
         {
@@ -36,7 +44,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
 
         _producer = new ProducerBuilder<string, string>(producerConfig).Build();
 
-        _logger.LogInformation("Kafka EventBus initialized. BootstrapServers: {BootstrapServers}", bootstrapServers);
+        _logger.LogInformation("Kafka EventBus initialized. BootstrapServers: {BootstrapServers}, TopicPrefix: {TopicPrefix}", bootstrapServers, _topicPrefix);
     }
 
     public async Task PublishAsync<TEvent>(TEvent domainEvent, CancellationToken cancellationToken = default)
@@ -95,19 +103,34 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
             }
             catch (ProduceException<string, string> ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error publishing event {EventType} to Kafka. Error: {Error}",
-                    domainEvent.GetType().Name,
-                    ex.Error.Reason);
-                throw;
+                var errorMessage = $"Error publishing event {domainEvent.GetType().Name} to Kafka. Error: {ex.Error.Reason}";
+                
+                if (ex.Error.IsFatal)
+                {
+                    _logger.LogError(ex, errorMessage);
+                    // При фатальной ошибке пробрасываем исключение
+                    throw;
+                }
+                else
+                {
+                    // При временной ошибке логируем предупреждение, но не прерываем выполнение
+                    _logger.LogWarning(ex, errorMessage + " Event may be lost.");
+                    // Можно добавить retry логику или очередь для повторной отправки
+                }
+            }
+            catch (KafkaException ex)
+            {
+                _logger.LogError(ex, "Kafka connection error while publishing event {EventType}: {Message}", 
+                    domainEvent.GetType().Name, ex.Message);
+                // При ошибке подключения логируем, но не прерываем выполнение приложения
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Error publishing event {EventType}",
+                    "Unexpected error publishing event {EventType}",
                     domainEvent.GetType().Name);
+                // Пробрасываем только критические ошибки
                 throw;
             }
         });
@@ -138,7 +161,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
         return envelope;
     }
 
-    private static string GetTopicName(IDomainEvent domainEvent)
+    private string GetTopicName(IDomainEvent domainEvent)
     {
         // Topic = namespace последняя часть
         // Например: Tenants.Domain.Events.TenantCreatedEvent -> domain-events-tenants
@@ -149,10 +172,10 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
         {
             // Берем первую часть namespace (например, Tenants, Users)
             var moduleName = namespaceParts[0].ToLowerInvariant();
-            return $"{DefaultTopicPrefix}-{moduleName}";
+            return $"{_topicPrefix}-{moduleName}";
         }
 
-        return DefaultTopicPrefix;
+        return _topicPrefix;
     }
 
     public void Dispose()

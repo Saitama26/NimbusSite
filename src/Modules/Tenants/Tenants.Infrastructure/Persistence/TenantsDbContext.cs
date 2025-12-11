@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Tenants.Domain.Entities;
-using Tenants.Infrastructure.Persistence.Configurations;
 using Tenants.Infrastructure.Persistence.Sharding;
+using Tenants.Infrastructure.Persistence.Configurations;
 
 namespace Tenants.Infrastructure.Persistence;
 

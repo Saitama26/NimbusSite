@@ -17,8 +17,11 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+        // Try environment variable first, then configuration
+        var connectionString = Environment.GetEnvironmentVariable("TENANTS_DB_CONNECTION_STRING")
+            ?? configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionStrings:DefaultConnection"]
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' or 'TENANTS_DB_CONNECTION_STRING' is not configured.");
 
         services.AddDbContext<TenantsDbContext>(options =>
             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
