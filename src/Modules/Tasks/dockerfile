@@ -1,0 +1,32 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
+
+COPY *.sln ./
+
+COPY src/Common/Common.Domain/Common.Domain.csproj ./src/Common/Common.Domain/
+COPY src/Common/Common.Application/Common.Application.csproj ./src/Common/Common.Application/
+COPY src/Common/Common.Infrastructure/Common.Infrastructure.csproj ./src/Common/Common.Infrastructure/
+
+COPY src/Modules/Tasks/Tasks.Domain/Tasks.Domain.csproj ./src/Modules/Tasks/Tasks.Domain/
+COPY src/Modules/Tasks/Tasks.Application/Tasks.Application.csproj ./src/Modules/Tasks/Tasks.Application/
+COPY src/Modules/Tasks/Tasks.Infrastructure/Tasks.Infrastructure.csproj ./src/Modules/Tasks/Tasks.Infrastructure/
+COPY src/Modules/Tasks/Tasks.Api/Tasks.Api.csproj ./src/Modules/Tasks/Tasks.Api/
+
+COPY src/Modules/Contracts/Contracts.csproj ./src/Modules/Contracts/
+
+RUN dotnet restore ./src/Modules/Tasks/Tasks.Api/Tasks.Api.csproj
+
+COPY . .
+
+WORKDIR /app/src/Modules/Tasks/Tasks.Api
+RUN dotnet publish --no-restore -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+
+WORKDIR /app
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+
+ENTRYPOINT ["dotnet", "Tasks.Api.dll"]
+

@@ -1,0 +1,32 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
+
+COPY *.sln ./
+
+COPY src/Common/Common.Domain/Common.Domain.csproj ./src/Common/Common.Domain/
+COPY src/Common/Common.Application/Common.Application.csproj ./src/Common/Common.Application/
+COPY src/Common/Common.Infrastructure/Common.Infrastructure.csproj ./src/Common/Common.Infrastructure/
+
+COPY src/Modules/AccessPermissions/AccessPermissions.Domain/AccessPermissions.Domain.csproj ./src/Modules/AccessPermissions/AccessPermissions.Domain/
+COPY src/Modules/AccessPermissions/AccessPermissions.Application/AccessPermissions.Application.csproj ./src/Modules/AccessPermissions/AccessPermissions.Application/
+COPY src/Modules/AccessPermissions/AccessPermissions.Infrastructure/AccessPermissions.Infrastructure.csproj ./src/Modules/AccessPermissions/AccessPermissions.Infrastructure/
+COPY src/Modules/AccessPermissions/AccessPermissions.Api/AccessPermissions.Api.csproj ./src/Modules/AccessPermissions/AccessPermissions.Api/
+
+COPY src/Modules/Contracts/Contracts.csproj ./src/Modules/Contracts/
+
+RUN dotnet restore ./src/Modules/AccessPermissions/AccessPermissions.Api/AccessPermissions.Api.csproj
+
+COPY . .
+
+WORKDIR /app/src/Modules/AccessPermissions/AccessPermissions.Api
+RUN dotnet publish --no-restore -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+
+WORKDIR /app
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+
+ENTRYPOINT ["dotnet", "AccessPermissions.Api.dll"]
+
