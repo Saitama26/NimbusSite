@@ -2,6 +2,8 @@ using Common.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.IO;
 
 namespace Projects.Infrastructure.Persistence;
 
@@ -12,14 +14,22 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ProjectsDb
 {
     public ProjectsDbContext CreateDbContext(string[] args)
     {
-        var basePath = Directory.GetCurrentDirectory();
-        EnvLoader.Load(Path.Combine(basePath, "..", ".env"));
+        // Загружаем .env из корня проекта
+        var solutionRoot = ProjectRootHelper.FindProjectRoot();
+        if (solutionRoot != null)
+        {
+            var envPath = Path.Combine(solutionRoot, ".env");
+            EnvLoader.Load(envPath);
+        }
+
+        // Путь к appsettings.json
+        var solutionRootPath = solutionRoot ?? Directory.GetCurrentDirectory();
+        var projectsApiPath = Path.Combine(solutionRootPath, "src", "Modules", "Projects", "Projects.Api");
 
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(basePath)
+            .SetBasePath(projectsApiPath)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine("src", "Modules", "Projects", "Projects.Api", "appsettings.json"), optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine("src", "Modules", "Projects", "Projects.Api", "appsettings.Development.json"), optional: true, reloadOnChange: false)
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
@@ -27,10 +37,13 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ProjectsDb
             Environment.GetEnvironmentVariable("PROJECTS_DB_CONNECTION_STRING")
             ?? configuration.GetConnectionString("DefaultConnection")
             ?? configuration["ConnectionStrings:DefaultConnection"]
-            ?? throw new InvalidOperationException("Connection string for Projects is not configured (PROJECTS_DB_CONNECTION_STRING or ConnectionStrings:DefaultConnection).");
+            ?? throw new InvalidOperationException(
+                "Connection string for Projects is not configured. " +
+                "Please set PROJECTS_DB_CONNECTION_STRING environment variable or configure ConnectionStrings:DefaultConnection in appsettings.json. " +
+                $"Checked .env file at: {(solutionRoot != null ? Path.Combine(solutionRoot, ".env") : ".env")}");
 
         var optionsBuilder = new DbContextOptionsBuilder<ProjectsDbContext>();
-        var serverVersion = ServerVersion.AutoDetect(connectionString);
+        var serverVersion = ServerVersion.Parse("8.0.0-mysql");
         optionsBuilder.UseMySql(connectionString, serverVersion);
 
         return new ProjectsDbContext(optionsBuilder.Options);

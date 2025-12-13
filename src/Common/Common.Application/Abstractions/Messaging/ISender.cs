@@ -4,7 +4,6 @@ namespace Common.Application.Abstractions.Messaging;
 
 /// <summary>
 /// Интерфейс для отправки команд и запросов
-/// Абстракция над MediatR или другой реализацией отправки сообщений
 /// </summary>
 public interface ISender
 {

@@ -4,8 +4,9 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Projects.Application.Abstractions;
 using Projects.Domain.Enums;
+using Contracts.Projects;
 using Projects.Domain.Errors;
-using Projects.Domain.Events;
+using Contracts.Projects.Events;
 
 namespace Projects.Application.Commands.DeleteProject;
 
@@ -52,7 +53,7 @@ internal sealed class DeleteProjectCommandHandler : ICommandHandler<DeleteProjec
 
         var events = new List<IDomainEvent>
         {
-            new ProjectStatusChangedEvent(project.Id, project.TenantId, oldStatus, ProjectStatus.Deleted, project.UpdatedAt),
+            new ProjectStatusChangedEvent(project.Id, project.TenantId, (ProjectStatusContract)(int)oldStatus, ProjectStatusContract.Deleted, project.UpdatedAt),
             new ProjectDeletedEvent(project.Id, project.TenantId, project.UpdatedAt)
         };
 

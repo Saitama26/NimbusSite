@@ -21,12 +21,12 @@ internal sealed class UserRepository : IUserRepository
             .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
     }
 
-    public async Task<User?> GetByEmailAsync(Guid tenantId, string email, CancellationToken cancellationToken = default)
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var emailLower = email.ToLowerInvariant().Trim();
         return await _dbContext.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Email == emailLower, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Email == emailLower, cancellationToken);
     }
 
     public Task<IQueryable<User>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -35,30 +35,25 @@ internal sealed class UserRepository : IUserRepository
         return Task.FromResult(_dbContext.Users.AsNoTracking().AsQueryable());
     }
 
-    public Task<IQueryable<User>> GetByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
-    {
-        // IQueryable остается валидным в рамках жизненного цикла DbContext (scoped).
-        return Task.FromResult(_dbContext.Users
-            .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
-            .AsQueryable());
-    }
-
-    public async Task<bool> ExistsByEmailAsync(Guid tenantId, string email, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var emailLower = email.ToLowerInvariant().Trim();
         return await _dbContext.Users
             .AsNoTracking()
-            .AnyAsync(x => x.TenantId == tenantId && x.Email == emailLower, cancellationToken);
+            .AnyAsync(x => x.Email == emailLower, cancellationToken);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
+        // Нормализуем email перед сохранением
+        user.Email = user.Email.ToLowerInvariant().Trim();
         await _dbContext.Users.AddAsync(user, cancellationToken);
     }
 
     public Task UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
+        // Нормализуем email перед сохранением
+        user.Email = user.Email.ToLowerInvariant().Trim();
         _dbContext.Users.Update(user);
         return Task.CompletedTask;
     }

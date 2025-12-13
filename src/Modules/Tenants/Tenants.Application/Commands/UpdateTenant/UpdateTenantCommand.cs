@@ -4,7 +4,7 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Tenants.Application.Abstractions;
 using Tenants.Domain.Errors;
-using Tenants.Domain.Events;
+using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.UpdateTenant;
 
@@ -75,7 +75,6 @@ internal sealed class UpdateTenantCommandHandler : ICommandHandler<UpdateTenantC
                     tenant.Id,
                     tenant.Name,
                     tenant.Description,
-                    tenant.AdminEmail,
                     tenant.UpdatedAt)
             };
 

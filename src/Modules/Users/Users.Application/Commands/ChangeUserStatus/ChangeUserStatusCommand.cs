@@ -5,8 +5,9 @@ using Common.Domain.Results;
 using FluentValidation;
 using Users.Application.Abstractions;
 using Users.Domain.Enums;
+using Contracts.Users;
 using Users.Domain.Errors;
-using Users.Domain.Events;
+using Contracts.Users.Events;
 
 namespace Users.Application.Commands.ChangeUserStatus;
 
@@ -55,7 +56,7 @@ internal sealed class ChangeUserStatusCommandHandler : ICommandHandler<ChangeUse
 
         var events = new List<IDomainEvent>
         {
-            new UserStatusChangedEvent(user.Id, user.TenantId, oldStatus, command.NewStatus, user.UpdatedAt)
+            new UserStatusChangedEvent(user.Id, (UserStatusContract)(int)oldStatus, (UserStatusContract)(int)command.NewStatus, user.UpdatedAt)
         };
 
         await _repository.UpdateAsync(user, cancellationToken);

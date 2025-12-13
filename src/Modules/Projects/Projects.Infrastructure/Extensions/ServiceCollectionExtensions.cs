@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IProjectUserRepository, ProjectUserRepository>();
         services.AddScoped<IUnitOfWork, Projects.Infrastructure.UnitOfWork>();
         services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
             sp.GetRequiredService<ProjectsDbContext>(),

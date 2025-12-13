@@ -21,5 +21,17 @@ public static class ProjectErrors
 
     public static Error CannotChangeStatus =>
         Error.Validation("Project.CannotChangeStatus", "Cannot change project status.");
+
+    public static Error UserNotFound(Guid userId) =>
+        Error.NotFound("Project.UserNotFound", $"User with ID {userId} was not found.");
+
+    public static Error UserAlreadyInProject(Guid userId, Guid projectId) =>
+        Error.Conflict("Project.UserAlreadyInProject", $"User {userId} is already in project {projectId}.");
+
+    public static Error UserNotInProject(Guid userId, Guid projectId) =>
+        Error.NotFound("Project.UserNotInProject", $"User {userId} is not in project {projectId}.");
+
+    public static Error ProjectUserNotFound(Guid projectUserId) =>
+        Error.NotFound("Project.ProjectUserNotFound", $"ProjectUser with ID {projectUserId} was not found.");
 }
 

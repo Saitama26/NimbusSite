@@ -1,5 +1,4 @@
 using Common.Domain.Results;
-using MediatR;
 
 namespace Common.Application.Abstractions.Messaging;
 
@@ -7,7 +6,7 @@ namespace Common.Application.Abstractions.Messaging;
 /// Базовый интерфейс команды (без возвращаемого значения)
 /// Используется для команд CQRS, которые изменяют состояние системы
 /// </summary>
-public interface ICommand : IRequest<Result>
+public interface ICommand
 {
 }
 
@@ -15,6 +14,6 @@ public interface ICommand : IRequest<Result>
 /// Базовый интерфейс команды с возвращаемым значением
 /// Используется для команд, которые возвращают результат (например, ID созданной сущности)
 /// </summary>
-public interface ICommand<TResult> : IRequest<Result<TResult>>
+public interface ICommand<TResult>
 {
 }

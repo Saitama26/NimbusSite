@@ -4,7 +4,7 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Tenants.Application.Abstractions;
 using Tenants.Domain.Errors;
-using Tenants.Domain.Events;
+using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.UpdateTenantConnectionString;
 

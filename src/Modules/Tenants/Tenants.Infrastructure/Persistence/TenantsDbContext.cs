@@ -15,11 +15,13 @@ public class TenantsDbContext : DbContext
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<UserTenant> UserTenants => Set<UserTenant>();
     public DbSet<ShardMapEntry> ShardMapEntries => Set<ShardMapEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new TenantConfiguration());
+        modelBuilder.ApplyConfiguration(new UserTenantConfiguration());
         modelBuilder.ApplyConfiguration(new ShardMapConfiguration());
 
         base.OnModelCreating(modelBuilder);

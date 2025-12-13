@@ -16,12 +16,12 @@ public static class UserErrors
             $"User with ID {userId} was not found.");
 
     /// <summary>
-    /// Пользователь с указанным email уже существует в рамках тенанта
+    /// Пользователь с указанным email уже существует (глобально)
     /// </summary>
-    public static Error EmailAlreadyExists(string email, Guid tenantId) =>
+    public static Error EmailAlreadyExists(string email) =>
         Error.Conflict(
             "User.EmailAlreadyExists",
-            $"User with email '{email}' already exists in tenant {tenantId}.");
+            $"User with email '{email}' already exists.");
 
     /// <summary>
     /// Email не может быть пустым
@@ -86,5 +86,21 @@ public static class UserErrors
         Error.Validation(
             "User.InvalidPhoneFormat",
             "Invalid phone number format.");
+
+    /// <summary>
+    /// Пароль не может быть пустым
+    /// </summary>
+    public static Error PasswordEmpty =>
+        Error.Validation(
+            "User.PasswordEmpty",
+            "Password cannot be empty.");
+
+    /// <summary>
+    /// Пароль слишком слабый
+    /// </summary>
+    public static Error PasswordTooWeak =>
+        Error.Validation(
+            "User.PasswordTooWeak",
+            "Password does not meet security requirements. Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one digit.");
 }
 

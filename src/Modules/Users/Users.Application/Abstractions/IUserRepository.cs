@@ -14,9 +14,9 @@ public interface IUserRepository
     Task<User?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Получить пользователя по email в рамках тенанта
+    /// Получить пользователя по email (глобально уникальный)
     /// </summary>
-    Task<User?> GetByEmailAsync(Guid tenantId, string email, CancellationToken cancellationToken = default);
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Получить IQueryable всех пользователей для OData пагинации, фильтрации и сортировки
@@ -24,14 +24,9 @@ public interface IUserRepository
     Task<IQueryable<User>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Получить IQueryable пользователей по тенанту
+    /// Проверить существование пользователя с указанным email (глобально)
     /// </summary>
-    Task<IQueryable<User>> GetByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Проверить существование пользователя с указанным email в рамках тенанта
-    /// </summary>
-    Task<bool> ExistsByEmailAsync(Guid tenantId, string email, CancellationToken cancellationToken = default);
+    Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Добавить нового пользователя

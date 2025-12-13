@@ -1,8 +1,11 @@
 using Common.Application.Abstractions.Messaging;
 using Microsoft.AspNetCore.Mvc;
+using Projects.Application.Commands.AddUserToProject;
 using Projects.Application.Commands.ChangeProjectStatus;
+using Projects.Application.Commands.ChangeUserRoleInProject;
 using Projects.Application.Commands.CreateProject;
 using Projects.Application.Commands.DeleteProject;
+using Projects.Application.Commands.RemoveUserFromProject;
 using Projects.Application.Commands.UpdateProject;
 using Projects.Application.DTOs;
 using Projects.Application.Queries.GetProjectById;
@@ -173,6 +176,87 @@ public class ProjectsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Добавить пользователя в проект
+    /// </summary>
+    /// <param name="projectId">Идентификатор проекта</param>
+    /// <param name="body">Данные для добавления пользователя</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Результат операции</returns>
+    /// <response code="201">Пользователь успешно добавлен в проект</response>
+    /// <response code="400">Ошибка валидации или пользователь уже в проекте</response>
+    /// <response code="404">Проект не найден</response>
+    /// <response code="500">Внутренняя ошибка сервера</response>
+    [HttpPost("{projectId:guid}/users")]
+    [ProducesResponseType(typeof(AddUserToProjectResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<AddUserToProjectResponse>> AddUser(Guid projectId, [FromBody] AddUserToProjectRequest body, CancellationToken cancellationToken)
+    {
+        var command = new AddUserToProjectCommand(projectId, body.UserId, body.Role);
+        var result = await _sender.Send<AddUserToProjectCommand, AddUserToProjectResponse>(command, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
+        }
+
+        return CreatedAtAction(nameof(GetById), new { projectId }, result.Value);
+    }
+
+    /// <summary>
+    /// Удалить пользователя из проекта
+    /// </summary>
+    /// <param name="projectId">Идентификатор проекта</param>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Результат операции</returns>
+    /// <response code="204">Пользователь успешно удален из проекта</response>
+    /// <response code="404">Проект или пользователь не найден</response>
+    /// <response code="500">Внутренняя ошибка сервера</response>
+    [HttpDelete("{projectId:guid}/users/{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoveUser(Guid projectId, Guid userId, CancellationToken cancellationToken)
+    {
+        var command = new RemoveUserFromProjectCommand(projectId, userId);
+        var result = await _sender.Send(command, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Изменить роль пользователя в проекте
+    /// </summary>
+    /// <param name="projectId">Идентификатор проекта</param>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="body">Новая роль</param>
+    /// <param name="cancellationToken">Токен отмены операции</param>
+    /// <returns>Результат операции</returns>
+    /// <response code="204">Роль пользователя успешно изменена</response>
+    /// <response code="404">Проект или пользователь не найден</response>
+    /// <response code="500">Внутренняя ошибка сервера</response>
+    [HttpPatch("{projectId:guid}/users/{userId:guid}/role")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangeUserRole(Guid projectId, Guid userId, [FromBody] ChangeUserRoleInProjectRequest body, CancellationToken cancellationToken)
+    {
+        var command = new ChangeUserRoleInProjectCommand(projectId, userId, body.Role);
+        var result = await _sender.Send(command, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
+        }
+
+        return NoContent();
+    }
+
     private static int? MapStatus(Common.Domain.Results.Error? error)
     {
         if (error == null) return 500;
@@ -187,4 +271,17 @@ public class ProjectsController : ControllerBase
         };
     }
 }
+
+/// <summary>
+/// Запрос на добавление пользователя в проект
+/// </summary>
+public record AddUserToProjectRequest(
+    Guid UserId,
+    Users.Domain.Enums.UserRole Role);
+
+/// <summary>
+/// Запрос на изменение роли пользователя в проекте
+/// </summary>
+public record ChangeUserRoleInProjectRequest(
+    Users.Domain.Enums.UserRole Role);
 

@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
         services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<IUserTenantRepository, UserTenantRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IShardResolver, MySqlShardResolver>();
 

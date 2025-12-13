@@ -1,30 +1,20 @@
+using Common.Infrastructure.Configuration;
 using Common.Infrastructure.Extensions;
-using DotNetEnv;
+using AccessPermissions.Application.Extensions;
+using AccessPermissions.Infrastructure.Extensions;
+using Microsoft.EntityFrameworkCore;
+using AccessPermissions.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env if present
-var envCandidates = new[]
-{
-    Path.Combine(Directory.GetCurrentDirectory(), "src", "Modules", "AccessPermissions", "AccessPermissions.Api", ".env"),
-    Path.Combine(AppContext.BaseDirectory, ".env"),
-    ".env"
-};
-
-foreach (var path in envCandidates)
-{
-    if (File.Exists(path))
-    {
-        Env.Load(path);
-        break;
-    }
-}
+// Загружаем .env из корня проекта
+ProjectRootHelper.LoadEnvFromProjectRoot();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
         Title = "AccessPermissions API",
         Version = "v1",
@@ -33,10 +23,32 @@ builder.Services.AddSwaggerGen(c =>
     c.UseInlineDefinitionsForEnums();
 });
 
-// Add Common Infrastructure (without module-specific services for now)
-builder.Services.AddCommonInfrastructure(builder.Configuration);
+// Add Common Infrastructure
+builder.Services.AddCommonInfrastructure(builder.Configuration, typeof(AccessPermissions.Application.Commands.CreateAccessPermission.CreateAccessPermissionCommand).Assembly);
+
+// Add AccessPermissions Application and Infrastructure
+builder.Services.AddAccessPermissionsApplication();
+builder.Services.AddAccessPermissionsInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+// Применяем миграции при старте (только в Development)
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AccessPermissionsDbContext>();
+        try
+        {
+            dbContext.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while migrating the database.");
+        }
+    }
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>

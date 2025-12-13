@@ -4,7 +4,7 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Projects.Application.Abstractions;
 using Projects.Domain.Errors;
-using Projects.Domain.Events;
+using Contracts.Projects.Events;
 
 namespace Projects.Application.Commands.UpdateProject;
 

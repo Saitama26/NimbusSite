@@ -1,5 +1,5 @@
+using Common.Infrastructure.Configuration;
 using Common.Infrastructure.Extensions;
-using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Tenants.Application.Extensions;
 using Tenants.Infrastructure.Extensions;
@@ -7,14 +7,8 @@ using Tenants.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env if present (optional, local dev)
-// Try loading from Tenants.Api folder first, then from root
-var envPath = Path.Combine(AppContext.BaseDirectory, ".env");
-if (!File.Exists(envPath))
-{
-    envPath = ".env";
-}
-Env.Load(envPath);
+// Загружаем .env из корня проекта
+ProjectRootHelper.LoadEnvFromProjectRoot();
 
 // Add services
 builder.Services
@@ -61,23 +55,41 @@ if (app.Environment.IsDevelopment())
         {
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred while migrating the database.");
-            // Не падаем, если миграции не применились - возможно БД еще не готова
         }
     }
 }
 
 // Swagger - всегда включаем
-app.UseSwagger();
+app.UseSwagger(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0);
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tenants API v1");
-    c.RoutePrefix = string.Empty; // Swagger UI будет доступен по корневому пути
+    c.RoutePrefix = string.Empty;
     c.DisplayRequestDuration();
     c.EnableTryItOutByDefault(); 
     c.EnableDeepLinking();
     c.EnableFilter();
     c.ShowExtensions();
 });
+
+// Подписываемся на события после построения приложения
+using (var scope = app.Services.CreateScope())
+{
+    var eventSubscriber = scope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventSubscriber>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    // Подписываемся на TenantCreatedEvent
+    await eventSubscriber.SubscribeAsync<Contracts.Tenants.Events.TenantCreatedEvent>(
+        async (evt, ct) =>
+        {
+            using var handlerScope = app.Services.CreateScope();
+            var handler = handlerScope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventHandler<Contracts.Tenants.Events.TenantCreatedEvent>>();
+            await handler.Handle(evt, ct);
+        },
+        CancellationToken.None);
+
+    logger.LogInformation("Tenants event handlers subscribed successfully");
+}
 
 app.MapControllers();
 

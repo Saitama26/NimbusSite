@@ -4,8 +4,9 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Projects.Application.Abstractions;
 using Projects.Domain.Enums;
+using Contracts.Projects;
 using Projects.Domain.Errors;
-using Projects.Domain.Events;
+using Contracts.Projects.Events;
 
 namespace Projects.Application.Commands.ChangeProjectStatus;
 
@@ -56,7 +57,7 @@ internal sealed class ChangeProjectStatusCommandHandler : ICommandHandler<Change
 
         var events = new List<IDomainEvent>
         {
-            new ProjectStatusChangedEvent(project.Id, project.TenantId, oldStatus, command.NewStatus, project.UpdatedAt)
+            new ProjectStatusChangedEvent(project.Id, project.TenantId, (ProjectStatusContract)(int)oldStatus, (ProjectStatusContract)(int)command.NewStatus, project.UpdatedAt)
         };
 
         await _repository.UpdateAsync(project, cancellationToken);

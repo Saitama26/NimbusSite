@@ -15,11 +15,13 @@ public class ProjectsDbContext : DbContext
     }
 
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<ProjectUser> ProjectUsers => Set<ProjectUser>();
     public DbSet<ShardMapEntry> ShardMapEntries => Set<ShardMapEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new ProjectConfiguration());
+        modelBuilder.ApplyConfiguration(new ProjectUserConfiguration());
         modelBuilder.ApplyConfiguration(new ShardMapConfiguration());
         base.OnModelCreating(modelBuilder);
     }

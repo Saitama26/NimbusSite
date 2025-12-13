@@ -1,5 +1,5 @@
+using Common.Infrastructure.Configuration;
 using Common.Infrastructure.Extensions;
-using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Users.Application.Extensions;
 using Users.Infrastructure;
@@ -7,18 +7,37 @@ using Users.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+// Загружаем .env из корня проекта
+ProjectRootHelper.LoadEnvFromProjectRoot();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
         Title = "Users API",
         Version = "v1",
         Description = "API для управления пользователями"
     });
+
+    // Включаем XML комментарии из API проекта
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+
+    // Включаем XML комментарии из Application проекта
+    var applicationAssembly = typeof(Users.Application.Commands.CreateUser.CreateUserCommand).Assembly;
+    var applicationXmlFile = $"{applicationAssembly.GetName().Name}.xml";
+    var applicationXmlPath = Path.Combine(AppContext.BaseDirectory, applicationXmlFile);
+    if (File.Exists(applicationXmlPath))
+    {
+        c.IncludeXmlComments(applicationXmlPath);
+    }
+
     c.UseInlineDefinitionsForEnums();
 });
 
@@ -48,7 +67,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseSwagger();
+app.UseSwagger(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0);
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Users API v1");

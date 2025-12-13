@@ -6,7 +6,7 @@ using FluentValidation;
 using Users.Application.Abstractions;
 using Users.Domain.Enums;
 using Users.Domain.Errors;
-using Users.Domain.Events;
+using Contracts.Users.Events;
 
 namespace Users.Application.Commands.UpdateUser;
 
@@ -87,7 +87,6 @@ internal sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserComma
         {
             new UserUpdatedEvent(
                 user.Id,
-                user.TenantId,
                 user.Name,
                 user.Phone,
                 user.Bio,

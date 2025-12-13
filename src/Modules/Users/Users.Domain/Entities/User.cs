@@ -1,20 +1,15 @@
 using Common.Domain.Entities;
-using Users.Domain.Enums;
 
 namespace Users.Domain.Entities;
 
 /// <summary>
 /// Сущность пользователя - агрегатный корень домена Users
+/// Пользователь может существовать без тенанта и быть в нескольких тенантах
 /// </summary>
 public class User : BaseEntity, IAggregateRoot
 {
     /// <summary>
-    /// Идентификатор тенанта, которому принадлежит пользователь
-    /// </summary>
-    public Guid TenantId { get; set; }
-
-    /// <summary>
-    /// Email пользователя (уникальный в рамках тенанта)
+    /// Email пользователя (глобально уникальный)
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
@@ -26,12 +21,7 @@ public class User : BaseEntity, IAggregateRoot
     /// <summary>
     /// Статус пользователя
     /// </summary>
-    public UserStatus Status { get; set; }
-
-    /// <summary>
-    /// Роль пользователя
-    /// </summary>
-    public UserRole Role { get; set; }
+    public Enums.UserStatus Status { get; set; }
 
     /// <summary>
     /// Дата и время последнего обновления

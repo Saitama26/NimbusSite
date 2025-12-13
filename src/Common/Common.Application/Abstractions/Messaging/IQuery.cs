@@ -1,5 +1,4 @@
 using Common.Domain.Results;
-using MediatR;
 
 namespace Common.Application.Abstractions.Messaging;
 
@@ -7,6 +6,6 @@ namespace Common.Application.Abstractions.Messaging;
 /// Базовый интерфейс запроса
 /// Используется для запросов CQRS, которые читают данные без изменения состояния
 /// </summary>
-public interface IQuery<TResult> : IRequest<Result<TResult>>
+public interface IQuery<TResult>
 {
 }

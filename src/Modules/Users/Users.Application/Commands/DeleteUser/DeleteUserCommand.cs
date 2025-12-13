@@ -5,8 +5,9 @@ using Common.Domain.Results;
 using FluentValidation;
 using Users.Application.Abstractions;
 using Users.Domain.Enums;
+using Contracts.Users;
 using Users.Domain.Errors;
-using Users.Domain.Events;
+using Contracts.Users.Events;
 
 namespace Users.Application.Commands.DeleteUser;
 
@@ -53,8 +54,8 @@ internal sealed class DeleteUserCommandHandler : ICommandHandler<DeleteUserComma
 
         var events = new List<IDomainEvent>
         {
-            new UserStatusChangedEvent(user.Id, user.TenantId, oldStatus, UserStatus.Deleted, user.UpdatedAt),
-            new UserDeletedEvent(user.Id, user.TenantId, user.UpdatedAt)
+            new UserStatusChangedEvent(user.Id, (UserStatusContract)(int)oldStatus, UserStatusContract.Deleted, user.UpdatedAt),
+            new UserDeletedEvent(user.Id, user.UpdatedAt)
         };
 
         await _repository.UpdateAsync(user, cancellationToken);

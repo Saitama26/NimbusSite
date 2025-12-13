@@ -1,18 +1,23 @@
+using Common.Infrastructure.Configuration;
 using Common.Infrastructure.Extensions;
-using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Projects.Application.Extensions;
 using Projects.Infrastructure;
 using Projects.Infrastructure.Extensions;
+using Tenants.Infrastructure.Extensions;
+using Users.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+// Загружаем .env из корня проекта
+ProjectRootHelper.LoadEnvFromProjectRoot();
 
 // Services
 builder.Services
     .AddProjectsApplication()
     .AddProjectsInfrastructure(builder.Configuration)
+    .AddTenantsInfrastructure(builder.Configuration) // Для доступа к IUserTenantRepository
+    .AddUsersInfrastructure(builder.Configuration) // Для доступа к IUserRepository
     .AddCommonInfrastructure(builder.Configuration, typeof(Projects.Application.Commands.CreateProject.CreateProjectCommand).Assembly);
 
 builder.Services.AddControllers();
@@ -67,7 +72,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseSwagger();
+app.UseSwagger(options => options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0);
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Projects API v1");
@@ -84,4 +89,3 @@ app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
-

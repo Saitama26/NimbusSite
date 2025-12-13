@@ -10,5 +10,10 @@ public static class EventTypes
     public const string Deleted = "Tenant.Deleted";
     public const string StatusChanged = "Tenant.StatusChanged";
     public const string ConnectionInfoChanged = "Tenant.ConnectionInfoChanged";
+    
+    // UserTenant events
+    public const string UserTenantCreated = "UserTenant.Created";
+    public const string UserTenantUpdated = "UserTenant.Updated";
+    public const string UserTenantDeleted = "UserTenant.Deleted";
 }
 

@@ -7,19 +7,19 @@ using Users.Application.Abstractions;
 using Users.Application.Commands.CreateUser;
 using Users.Domain.Entities;
 using Users.Domain.Enums;
+using Contracts.Users;
 using Users.Domain.Errors;
-using Users.Domain.Events;
+using Contracts.Users.Events;
 
 namespace Users.Application.Commands.CreateUser;
 
 /// <summary>
 /// Команда создания нового пользователя
+/// Пользователь создается без тенанта, тенант добавляется позже через UserTenant
 /// </summary>
 public sealed record CreateUserCommand(
-    Guid TenantId,
     string Email,
     string Name,
-    UserRole Role = UserRole.User,
     string? Phone = null,
     string? Bio = null) : ICommand<CreateUserResponse>;
 
@@ -61,11 +61,11 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
             return Result<CreateUserResponse>.Failure(UserErrors.InvalidEmailFormat);
         }
 
-        // Проверка уникальности email в рамках тенанта
-        var exists = await _repository.ExistsByEmailAsync(command.TenantId, emailLower, cancellationToken);
+        // Проверка уникальности email (глобально)
+        var exists = await _repository.ExistsByEmailAsync(emailLower, cancellationToken);
         if (exists)
         {
-            return Result<CreateUserResponse>.Failure(UserErrors.EmailAlreadyExists(emailLower, command.TenantId));
+            return Result<CreateUserResponse>.Failure(UserErrors.EmailAlreadyExists(emailLower));
         }
 
         // Валидация имени
@@ -75,13 +75,11 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
             return Result<CreateUserResponse>.Failure(UserErrors.NameEmpty);
         }
 
-        // Создание пользователя
+        // Создание пользователя (без тенанта)
         var user = new User
         {
-            TenantId = command.TenantId,
             Email = emailLower,
             Name = name,
-            Role = command.Role,
             Status = UserStatus.Active,
             Phone = command.Phone?.Trim(),
             Bio = command.Bio?.Trim(),
@@ -91,11 +89,9 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
         {
             new UserCreatedEvent(
                 user.Id,
-                user.TenantId,
                 user.Email,
                 user.Name,
-                user.Role,
-                user.Status,
+                (UserStatusContract)(int)user.Status,
                 user.Phone,
                 user.Bio,
                 user.CreatedAt)
@@ -119,9 +115,6 @@ internal sealed class CreateUserCommandValidator : AbstractValidator<CreateUserC
 {
     public CreateUserCommandValidator()
     {
-        RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
-
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.")

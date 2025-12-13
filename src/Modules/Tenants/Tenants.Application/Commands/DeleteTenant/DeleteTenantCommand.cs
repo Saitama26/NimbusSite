@@ -4,8 +4,9 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Tenants.Application.Abstractions;
 using Tenants.Domain.Enums;
+using Contracts.Tenants;
 using Tenants.Domain.Errors;
-using Tenants.Domain.Events;
+using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.DeleteTenant;
 
@@ -55,7 +56,7 @@ internal sealed class DeleteTenantCommandHandler : ICommandHandler<DeleteTenantC
         tenant.UpdatedAt = DateTime.UtcNow;
         var events = new List<IDomainEvent>
         {
-            new TenantStatusChangedEvent(tenant.Id, oldStatus, TenantStatus.Deleted, tenant.UpdatedAt),
+            new TenantStatusChangedEvent(tenant.Id, (TenantStatusContract)(int)oldStatus, TenantStatusContract.Deleted, tenant.UpdatedAt),
             new TenantDeletedEvent(tenant.Id, tenant.UpdatedAt)
         };
 

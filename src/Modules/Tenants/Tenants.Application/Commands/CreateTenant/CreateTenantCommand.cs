@@ -6,20 +6,21 @@ using Tenants.Application.Abstractions;
 using Tenants.Application.Commands.CreateTenant;
 using Tenants.Domain.Entities;
 using Tenants.Domain.Enums;
+using Contracts.Tenants;
 using Tenants.Domain.Errors;
-using Tenants.Domain.Events;
+using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.CreateTenant;
 
 /// <summary>
 /// Команда создания нового тенанта
+/// Тенант создается автоматически при создании первого проекта пользователем
 /// </summary>
 public sealed record CreateTenantCommand(
     string Name,
-    string Subdomain,
+    Guid CreatedByUserId,
     string? ConnectionString = null,
-    string? Description = null,
-    string? AdminEmail = null) : ICommand<CreateTenantResponse>;
+    string? Description = null) : ICommand<CreateTenantResponse>;
 
 
 
@@ -44,22 +45,14 @@ internal sealed class CreateTenantCommandHandler : ICommandHandler<CreateTenantC
 
     public async Task<Result<CreateTenantResponse>> Handle(CreateTenantCommand command, CancellationToken cancellationToken)
     {
-        // Проверка уникальности поддомена
-        var subdomainLower = command.Subdomain.ToLowerInvariant().Trim();
-        var exists = await _repository.ExistsBySubdomainAsync(subdomainLower, cancellationToken);
-        if (exists)
-        {
-            return Result<CreateTenantResponse>.Failure(TenantErrors.SubdomainAlreadyExists(subdomainLower));
-        }
-
-        // Создание тенанта
+        // Создание тенанта (без поддомена, так как он не используется)
         var tenant = new Tenant
         {
             Name = command.Name.Trim(),
-            Subdomain = subdomainLower,
+            Subdomain = string.Empty, // Не используется, но оставляем для совместимости с БД
             ConnectionString = command.ConnectionString,
             Description = command.Description?.Trim(),
-            AdminEmail = command.AdminEmail?.Trim(),
+            AdminEmail = null, // Админ определяется через UserTenant
             Status = TenantStatus.Active,
         };
 
@@ -68,10 +61,9 @@ internal sealed class CreateTenantCommandHandler : ICommandHandler<CreateTenantC
             new TenantCreatedEvent(
                 tenant.Id,
                 tenant.Name,
-                tenant.Subdomain,
-                tenant.Status,
+                (TenantStatusContract)(int)tenant.Status,
+                command.CreatedByUserId,
                 tenant.Description,
-                tenant.AdminEmail,
                 tenant.ConnectionString,
                 tenant.CreatedAt)
         };

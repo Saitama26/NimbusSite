@@ -2,6 +2,8 @@ using Common.Infrastructure.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.IO;
 
 namespace Users.Infrastructure.Persistence;
 
@@ -12,14 +14,22 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UsersDbCon
 {
     public UsersDbContext CreateDbContext(string[] args)
     {
-        var basePath = Directory.GetCurrentDirectory();
-        EnvLoader.Load(Path.Combine(basePath, "..", ".env"));
+        // Загружаем .env из корня проекта
+        var solutionRoot = ProjectRootHelper.FindProjectRoot();
+        if (solutionRoot != null)
+        {
+            var envPath = Path.Combine(solutionRoot, ".env");
+            EnvLoader.Load(envPath);
+        }
+
+        // Путь к appsettings.json
+        var solutionRootPath = solutionRoot ?? Directory.GetCurrentDirectory();
+        var usersApiPath = Path.Combine(solutionRootPath, "src", "Modules", "Users", "Users.Api");
 
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(basePath)
+            .SetBasePath(usersApiPath)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine("src", "Modules", "Users", "Users.Api", "appsettings.json"), optional: true, reloadOnChange: false)
-            .AddJsonFile(Path.Combine("src", "Modules", "Users", "Users.Api", "appsettings.Development.json"), optional: true, reloadOnChange: false)
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
@@ -27,7 +37,10 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<UsersDbCon
             Environment.GetEnvironmentVariable("USERS_DB_CONNECTION_STRING")
             ?? configuration.GetConnectionString("DefaultConnection")
             ?? configuration["ConnectionStrings:DefaultConnection"]
-            ?? throw new InvalidOperationException("Connection string for Users is not configured (USERS_DB_CONNECTION_STRING or ConnectionStrings:DefaultConnection).");
+            ?? throw new InvalidOperationException(
+                "Connection string for Users is not configured. " +
+                "Please set USERS_DB_CONNECTION_STRING environment variable or configure ConnectionStrings:DefaultConnection in appsettings.json. " +
+                $"Checked .env file at: {(solutionRoot != null ? Path.Combine(solutionRoot, ".env") : ".env")}");
 
         var optionsBuilder = new DbContextOptionsBuilder<UsersDbContext>();
         var serverVersion = ServerVersion.Parse("8.0.0-mysql");

@@ -4,8 +4,9 @@ using Common.Domain.Events;
 using Common.Domain.Results;
 using Tenants.Application.Abstractions;
 using Tenants.Domain.Enums;
+using Contracts.Tenants;
 using Tenants.Domain.Errors;
-using Tenants.Domain.Events;
+using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.ChangeTenantStatus;
 
@@ -57,7 +58,7 @@ internal sealed class ChangeTenantStatusCommandHandler : ICommandHandler<ChangeT
         tenant.UpdatedAt = DateTime.UtcNow;
         var events = new List<IDomainEvent>
         {
-            new TenantStatusChangedEvent(tenant.Id, oldStatus, command.NewStatus, tenant.UpdatedAt)
+            new TenantStatusChangedEvent(tenant.Id, (TenantStatusContract)(int)oldStatus, (TenantStatusContract)(int)command.NewStatus, tenant.UpdatedAt)
         };
 
         // Сохранение

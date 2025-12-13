@@ -9,8 +9,8 @@ internal sealed class CreateProjectCommandValidator : AbstractValidator<CreatePr
 {
     public CreateProjectCommandValidator()
     {
-        RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
+        RuleFor(x => x.UserId)
+            .NotEmpty().WithMessage("User ID is required.");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Project name is required.")
@@ -19,6 +19,10 @@ internal sealed class CreateProjectCommandValidator : AbstractValidator<CreatePr
         RuleFor(x => x.Description)
             .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
             .When(x => !string.IsNullOrWhiteSpace(x.Description));
+
+        RuleFor(x => x.TenantName)
+            .MaximumLength(200).WithMessage("Tenant name must not exceed 200 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.TenantName));
     }
 }
 
