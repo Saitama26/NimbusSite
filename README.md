@@ -1,146 +1,109 @@
-# NimbusSite - Distributed Monolith Architecture
+# NimbusSite
 
-Система управления проектами с поддержкой мультитенантности, построенная как распределенный монолит.
+Система управления проектами с мультитенантностью. Distributed Monolith архитектура.
 
-## 📋 Содержание
+## Технологии
 
-- [Архитектура](#архитектура)
-- [Технологии](#технологии)
-- [Структура проекта](#структура-проекта)
-- [Реализованные модули](#реализованные-модули)
-- [Быстрый старт](#быстрый-старт)
-- [API Документация](#api-документация)
-- [Конфигурация](#конфигурация)
+- .NET 10.0
+- MySQL 8.0
+- Kafka (KRaft mode)
+- Entity Framework Core 8.0.7
+- Docker & Docker Compose
 
-## 🏗️ Архитектура
+## Запуск
 
-Проект построен на принципах **Distributed Monolith** с использованием **Clean Architecture** и **CQRS** паттернов.
+### Требования
+- Docker & Docker Compose
+- .NET 10.0 SDK (для разработки)
 
-### Принципы архитектуры
+### Быстрый старт
 
-1. **Каждый модуль - независимое API** со своей БД
-2. **Взаимодействие через события** (Kafka) для изменений
-3. **Чтение из других модулей** через view БД (read-only)
-4. **Шардирование** по TenantId с использованием ShardMapManager
-5. **CQRS** - разделение команд и запросов
-6. **Domain-Driven Design** - доменная модель в центре
-
-### Слои модуля
-
-Каждый модуль состоит из следующих слоев:
-
-- **Domain** - доменные сущности, события, value objects, агрегаты
-- **Application** - команды, запросы, handlers (CQRS), DTOs, маппинг
-- **Infrastructure** - репозитории, DbContext, миграции, события, внешние сервисы
-- **Api** - REST API, контроллеры, Swagger
-- **Events** - контракты событий для Kafka
-
-## 🛠️ Технологии
-
-- **.NET 10.0**
-- **Entity Framework Core 8.0.7** (Code First)
-- **MySQL** (Pomelo.EntityFrameworkCore.MySql 8.0.2)
-- **MediatR 12.2.0** (CQRS)
-- **FluentValidation** (валидация команд)
-- **AutoMapper** (маппинг объектов)
-- **Kafka** (Confluent.Kafka 2.3.0) - события между модулями
-- **Swagger/OpenAPI** (Swashbuckle.AspNetCore 10.0.1) - документация API
-- **DotNetEnv** - загрузка переменных окружения из .env
-
-## 📁 Структура проекта
-
-```
-NimbusSite/
-├── src/
-│   ├── Common/                          # Общий функционал
-│   │   ├── Common.Domain/              # Базовые доменные типы, события, Results
-│   │   ├── Common.Application/         # Общие абстракции (ICommand, IQuery, ISender)
-│   │   └── Common.Infrastructure/      # Общая инфраструктура
-│   │       ├── Messaging/              # MediatRSender (реализация ISender)
-│   │       ├── Events/                 # KafkaEventBus, KafkaEventSubscriber
-│   │       ├── Behaviors/              # LoggingBehavior, ValidationBehavior
-│   │       ├── Middleware/             # ErrorHandling, CorrelationId, TenantContext
-│   │       └── Configuration/          # EnvLoader
-│   │
-│   ├── Modules/                        # Бизнес-модули (домены)
-│   │   ├── Tenants/                    # ✅ Управление тенантами (РЕАЛИЗОВАНО)
-│   │   ├── Users/                      # ⏳ Управление пользователями
-│   │   ├── Identity/                   # ⏳ Аутентификация/Авторизация
-│   │   ├── Projects/                   # ⏳ Управление проектами
-│   │   ├── Tasks/                      # ⏳ Управление задачами
-│   │   └── AccessPermissions/          # ⏳ Разрешения и доступы
-│   │
-│   └── Gateway/                        # API Gateway
-│       └── Gateway.Api/
-│
-└── .env                                # Переменные окружения (не в git)
+1. Клонировать репозиторий:
+```bash
+git clone <repository-url>
+cd NimbusSite
 ```
 
-## ✅ Реализованные модули
+2. Запустить все сервисы:
+```bash
+docker-compose up --build
+```
 
-### Tenants Module (Полностью реализован)
+3. API доступны:
+- **Tenants**: http://localhost:5001
+- **Users**: http://localhost:5002
+- **Projects**: http://localhost:5003
+- **Tasks**: http://localhost:5004
+- **Identity**: http://localhost:5005
+- **AccessPermissions**: http://localhost:5006
 
-Модуль для управления тенантами в системе.
+Swagger UI доступен на корневом пути каждого API (например, http://localhost:5001).
 
-#### Функциональность
+### Полезные команды
 
-**Команды (Commands):**
-- ✅ `CreateTenant` - создание нового тенанта
-- ✅ `UpdateTenant` - обновление информации о тенанте
-- ✅ `DeleteTenant` - удаление тенанта (soft delete)
-- ✅ `ChangeTenantStatus` - изменение статуса тенанта
-- ✅ `UpdateTenantConnectionString` - обновление строки подключения
+**Остановить все сервисы:**
+```bash
+docker-compose down
+```
 
-**Запросы (Queries):**
-- ✅ `GetTenants` - получение списка всех тенантов
-- ✅ `GetTenantById` - получение тенанта по ID
+**Перезапустить только API сервисы:**
+```bash
+docker-compose restart tenants-api users-api projects-api tasks-api identity-api accesspermissions-api
+```
 
-**API Endpoints:**
-- ✅ `GET /api/tenants` - список тенантов
-- ✅ `GET /api/tenants/{tenantId}` - тенант по ID
-- ✅ `POST /api/tenants` - создать тенанта
-- ✅ `PUT /api/tenants/{tenantId}` - обновить тенанта
-- ✅ `DELETE /api/tenants/{tenantId}` - удалить тенанта
-- ✅ `PATCH /api/tenants/{tenantId}/status` - изменить статус
-- ✅ `PUT /api/tenants/{tenantId}/connection-string` - обновить connection string
+**Просмотреть логи:**
+```bash
+docker-compose logs -f <service-name>
+# Например: docker-compose logs -f projects-api
+```
 
-**Доменные события:**
-- ✅ `TenantCreatedEvent`
-- ✅ `TenantUpdatedEvent`
-- ✅ `TenantDeletedEvent`
-- ✅ `TenantStatusChangedEvent`
-- ✅ `TenantConnectionStringUpdatedEvent`
+**Проверить топики Kafka:**
+```bash
+docker exec -it nimbussite-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+```
 
-**Интеграционные события:**
-- ✅ `TenantCreatedIntegrationEvent`
-- ✅ `TenantUpdatedIntegrationEvent`
-- ✅ `TenantDeletedIntegrationEvent`
-- ✅ `TenantStatusChangedIntegrationEvent`
-- ✅ `TenantConnectionInfoChangedIntegrationEvent`
+**Подключиться к MySQL:**
+```bash
+docker exec -it nimbussite-mysql mysql -uroot -psqlPassword123
+```
 
-**Особенности:**
-- ✅ Валидация команд через FluentValidation
-- ✅ Обработка ошибок через Result pattern
-- ✅ Публикация событий в Kafka
-- ✅ Шардирование через ShardMapManager
-- ✅ UnitOfWork паттерн
-- ✅ Репозиторий паттерн
+## Что реализовано
 
-#### Модель данных
+### Модули
+- ✅ **Tenants** - управление тенантами
+- ✅ **Users** - управление пользователями
+- ✅ **Identity** - аутентификация/авторизация (JWT)
+- ✅ **Projects** - управление проектами
+- ✅ **Tasks** - управление задачами
+- ✅ **AccessPermissions** - управление правами доступа
 
-**Tenant:**
-- `Id` (Guid) - уникальный идентификатор
-- `Name` (string) - название тенанта
-- `Subdomain` (string) - поддомен (уникальный)
-- `ConnectionString` (string?) - строка подключения к БД тенанта
-- `Status` (TenantStatus) - статус (Active, Suspended, Deleted)
-- `Description` (string?) - описание
-- `AdminEmail` (string?) - email администратора
-- `CreatedAt` (DateTime) - дата создания
-- `UpdatedAt` (DateTime?) - дата обновления
+### Функциональность
+- ✅ CQRS (Commands/Queries)
+- ✅ События через Kafka (изменение данных в других доменах)
+- ✅ Автоматическое создание топиков Kafka при запуске
+- ✅ Шардирование по TenantId
+- ✅ REST API с Swagger
+- ✅ Миграции БД (EF Core)
+- ⏳ Database Views для чтения из других доменов (не реализовано)
+- ⏳ Обработка Kafka events (не реализовано)
 
-**ShardMapEntry:**
-- `TenantId` (Guid) - ID тенанта
-- `ConnectionString` (string) - строка подключения к шарду
-- `ShardKey` (string) - ключ шарда
+## Структура проекта
 
+```
+src/
+├── Common/              # Общий функционал
+├── Modules/            # Бизнес-модули
+│   ├── Tenants/
+│   ├── Users/
+│   ├── Identity/
+│   ├── Projects/
+│   ├── Tasks/
+│   └── AccessPermissions/
+└── Contracts/          # Контракты событий
+```
+
+Каждый модуль: **Domain** → **Application** → **Infrastructure** → **Api**
+
+## Конфигурация
+
+Переменные окружения настраиваются в `docker-compose.yml`. Опционально можно создать `.env` файл в корне проекта.
