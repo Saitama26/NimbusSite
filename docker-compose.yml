@@ -5,7 +5,7 @@ services:
     container_name: nimbussite-mysql
     environment:
       MYSQL_ROOT_PASSWORD: sqlPassword123
-      MYSQL_DATABASE: NimbusSite_Tenants
+      MYSQL_DATABASE: NimbusSite_Users
     ports:
       - "3307:3306"
     volumes:
@@ -49,13 +49,34 @@ services:
     networks:
       - nimbussite-network
 
+  # Kafka Topics Initializer
+  kafka-topics-init:
+    image: apache/kafka:latest
+    container_name: nimbussite-kafka-topics-init
+    volumes:
+      - ./scripts/create-kafka-topics.sh:/create-kafka-topics.sh
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["/create-kafka-topics.sh && tail -f /dev/null"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVER: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list 2>/dev/null | grep -q 'domain-events-users'"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 50s
+    networks:
+      - nimbussite-network
+    restart: "no"
+
   # Tenants API
   tenants-api:
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        PROJECT_PATH: src/Modules/Tenants/Tenants.Api
+      dockerfile: src/Modules/Tenants/dockerfile
     container_name: nimbussite-tenants-api
     ports:
       - "5001:8080"
@@ -70,7 +91,34 @@ services:
       mysql:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
+    networks:
+      - nimbussite-network
+
+  # Users API
+  users-api:
+    build:
+      context: .
+      dockerfile: src/Modules/Users/dockerfile
+    container_name: nimbussite-users-api
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: domain-events
+      USERS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Users;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=NimbusSite_Users;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
     networks:
       - nimbussite-network
 
@@ -78,12 +126,10 @@ services:
   projects-api:
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-        PROJECT_PATH: src/Modules/Projects/Projects.Api
+      dockerfile: src/Modules/Projects/dockerfile
     container_name: nimbussite-projects-api
     ports:
-      - "5002:8080"
+      - "5003:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
@@ -95,7 +141,87 @@ services:
       mysql:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
+    networks:
+      - nimbussite-network
+
+  # Tasks API
+  tasks-api:
+    build:
+      context: .
+      dockerfile: src/Modules/Tasks/dockerfile
+    container_name: nimbussite-tasks-api
+    ports:
+      - "5004:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: domain-events
+      TASKS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Tasks;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=NimbusSite_Tasks;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
+    networks:
+      - nimbussite-network
+
+  # Identity API
+  identity-api:
+    build:
+      context: .
+      dockerfile: src/Modules/Identity/dockerfile
+    container_name: nimbussite-identity-api
+    ports:
+      - "5005:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: domain-events
+      IDENTITY_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Identity;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=NimbusSite_Identity;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      JWT__SECRETKEY: your-secret-key-here-change-in-production
+      JWT__ISSUER: NimbusSite
+      JWT__AUDIENCE: NimbusSite-Users
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
+    networks:
+      - nimbussite-network
+
+  # AccessPermissions API
+  accesspermissions-api:
+    build:
+      context: .
+      dockerfile: src/Modules/AccessPermissions/dockerfile
+    container_name: nimbussite-accesspermissions-api
+    ports:
+      - "5006:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_PREFIX: domain-events
+      ACCESSPERMISSIONS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_AccessPermissions;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=NimbusSite_AccessPermissions;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-topics-init:
+        condition: service_healthy
     networks:
       - nimbussite-network
 
