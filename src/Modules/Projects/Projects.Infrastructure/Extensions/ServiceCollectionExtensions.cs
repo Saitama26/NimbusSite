@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Projects.Application.Abstractions;
+using Projects.Application.Abstractions.Views;
 using Projects.Infrastructure.Repositories;
 using Projects.Infrastructure.Sharding;
+using Projects.Infrastructure.Views.UsersViews;
 
 namespace Projects.Infrastructure.Extensions;
 
@@ -27,6 +29,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IProjectUserRepository, ProjectUserRepository>();
+        services.AddScoped<IUserViewRepository, UserViewRepository>();
         services.AddScoped<IUnitOfWork, Projects.Infrastructure.UnitOfWork>();
         services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
             sp.GetRequiredService<ProjectsDbContext>(),

@@ -2,9 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Identity.Application.Abstractions;
+using Identity.Application.Abstractions.Views;
 using Identity.Infrastructure.Repositories;
 using Identity.Infrastructure.Sharding;
 using Identity.Infrastructure.Services;
+using Identity.Infrastructure.Views.TenantsViews;
+using Identity.Infrastructure.Views.UsersViews;
 
 namespace Identity.Infrastructure.Extensions;
 
@@ -29,6 +32,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserCredentialsRepository, UserCredentialsRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ISessionRepository, SessionRepository>();
+        services.AddScoped<IUserViewRepository, UserViewRepository>();
+        services.AddScoped<ITenantViewRepository, TenantViewRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
         services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
             sp.GetRequiredService<IdentityDbContext>(),

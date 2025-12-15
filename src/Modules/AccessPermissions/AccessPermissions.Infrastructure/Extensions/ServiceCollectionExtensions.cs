@@ -2,8 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AccessPermissions.Application.Abstractions;
+using AccessPermissions.Application.Abstractions.Views;
 using AccessPermissions.Infrastructure.Repositories;
 using AccessPermissions.Infrastructure.UnitOfWork;
+using AccessPermissions.Infrastructure.Views.ProjectsViews;
+using AccessPermissions.Infrastructure.Views.TasksViews;
+using AccessPermissions.Infrastructure.Views.TenantsViews;
+using AccessPermissions.Infrastructure.Views.UsersViews;
 
 namespace AccessPermissions.Infrastructure.Extensions;
 
@@ -26,6 +31,10 @@ public static class ServiceCollectionExtensions
             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
         services.AddScoped<IAccessPermissionRepository, AccessPermissionRepository>();
+        services.AddScoped<IUserViewRepository, UserViewRepository>();
+        services.AddScoped<IProjectViewRepository, ProjectViewRepository>();
+        services.AddScoped<ITaskViewRepository, TaskViewRepository>();
+        services.AddScoped<ITenantViewRepository, TenantViewRepository>();
         services.AddScoped<IUnitOfWork, AccessPermissions.Infrastructure.UnitOfWork.UnitOfWork>();
 
         return services;

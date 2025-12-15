@@ -48,5 +48,13 @@ internal sealed class ProjectRepository : IProjectRepository
         _dbContext.Projects.Remove(project);
         return Task.CompletedTask;
     }
+
+    public async Task<IQueryable<Project>> GetByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask;
+        return _dbContext.Projects
+            .AsNoTracking()
+            .Where(p => p.TenantId == tenantId);
+    }
 }
 

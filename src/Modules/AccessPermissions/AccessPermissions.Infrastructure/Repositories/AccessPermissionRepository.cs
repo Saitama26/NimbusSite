@@ -3,6 +3,7 @@ using AccessPermissions.Application.Abstractions;
 using AccessPermissions.Domain.Entities;
 using AccessPermissions.Domain.Enums;
 using AccessPermissions.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessPermissions.Infrastructure.Repositories;
 
@@ -162,6 +163,34 @@ internal sealed class AccessPermissionRepository : IAccessPermissionRepository
     {
         _dbContext.AccessPermissions.Remove(permission);
         return Task.CompletedTask;
+    }
+
+    public Task<int> DeleteByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.AccessPermissions
+            .Where(p => p.UserId == userId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.AccessPermissions
+            .Where(p => p.ProjectId == projectId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteByTaskIdAsync(Guid taskId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.AccessPermissions
+            .Where(p => p.TaskId == taskId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public Task<int> DeleteByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.AccessPermissions
+            .Where(p => p.TenantId == tenantId)
+            .ExecuteDeleteAsync(cancellationToken);
     }
 }
 

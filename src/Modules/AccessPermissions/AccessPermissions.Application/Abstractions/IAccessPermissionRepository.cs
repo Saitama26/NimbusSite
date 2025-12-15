@@ -77,5 +77,25 @@ public interface IAccessPermissionRepository
     /// Удалить разрешение
     /// </summary>
     Task DeleteAsync(AccessPermission permission, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Массовое удаление по пользователю
+    /// </summary>
+    Task<int> DeleteByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Массовое удаление по проекту
+    /// </summary>
+    Task<int> DeleteByProjectIdAsync(Guid projectId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Массовое удаление по задаче
+    /// </summary>
+    Task<int> DeleteByTaskIdAsync(Guid taskId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Массовое удаление по тенанту
+    /// </summary>
+    Task<int> DeleteByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }
 

@@ -18,5 +18,7 @@ public interface IProjectRepository
     Task UpdateAsync(Project project, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Project project, CancellationToken cancellationToken = default);
+
+    Task<IQueryable<Project>> GetByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }
 

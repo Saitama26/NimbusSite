@@ -57,6 +57,53 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
+// Подписки на интеграционные события
+using (var scope = app.Services.CreateScope())
+{
+    var eventSubscriber = scope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventSubscriber>();
+
+    // Users
+    await eventSubscriber.SubscribeAsync<Contracts.Users.Events.UserDeletedEvent>(
+        async (evt, ct) =>
+        {
+            using var handlerScope = app.Services.CreateScope();
+            var handler = handlerScope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventHandler<Contracts.Users.Events.UserDeletedEvent>>();
+            await handler.Handle(evt, ct);
+        },
+        CancellationToken.None);
+
+    // Projects
+    await eventSubscriber.SubscribeAsync<Contracts.Projects.Events.ProjectDeletedEvent>(
+        async (evt, ct) =>
+        {
+            using var handlerScope = app.Services.CreateScope();
+            var handler = handlerScope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventHandler<Contracts.Projects.Events.ProjectDeletedEvent>>();
+            await handler.Handle(evt, ct);
+        },
+        CancellationToken.None);
+
+    // Tasks
+    await eventSubscriber.SubscribeAsync<Contracts.Tasks.Events.TaskDeletedEvent>(
+        async (evt, ct) =>
+        {
+            using var handlerScope = app.Services.CreateScope();
+            var handler = handlerScope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventHandler<Contracts.Tasks.Events.TaskDeletedEvent>>();
+            await handler.Handle(evt, ct);
+        },
+        CancellationToken.None);
+
+    // Tenants
+    await eventSubscriber.SubscribeAsync<Contracts.Tenants.Events.TenantDeletedEvent>(
+        async (evt, ct) =>
+        {
+            using var handlerScope = app.Services.CreateScope();
+            var handler = handlerScope.ServiceProvider.GetRequiredService<Common.Application.Abstractions.Events.IEventHandler<Contracts.Tenants.Events.TenantDeletedEvent>>();
+            await handler.Handle(evt, ct);
+        },
+        CancellationToken.None);
+
+}
+
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 

@@ -2,8 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Tasks.Application.Abstractions;
+using Tasks.Application.Abstractions.Views;
 using Tasks.Infrastructure.Repositories;
 using Tasks.Infrastructure.Sharding;
+using Tasks.Infrastructure.Views.ProjectsViews;
+using Tasks.Infrastructure.Views.TenantsViews;
+using Tasks.Infrastructure.Views.UsersViews;
 
 namespace Tasks.Infrastructure.Extensions;
 
@@ -26,6 +30,9 @@ public static class ServiceCollectionExtensions
             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
         services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<IUserViewRepository, UserViewRepository>();
+        services.AddScoped<IProjectViewRepository, ProjectViewRepository>();
+        services.AddScoped<ITenantViewRepository, TenantViewRepository>();
         services.AddScoped<IUnitOfWork, Tasks.Infrastructure.UnitOfWork.UnitOfWork>();
         services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
             sp.GetRequiredService<TasksDbContext>(),
