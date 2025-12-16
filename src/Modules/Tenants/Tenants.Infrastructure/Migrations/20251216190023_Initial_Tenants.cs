@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Tenants.Infrastructure.Persistence.Migrations
+namespace Tenants.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialTenants : Migration
+    public partial class Initial_Tenants : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

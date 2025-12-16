@@ -9,11 +9,11 @@ using Tenants.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace Tenants.Infrastructure.Persistence.Migrations
+namespace Tenants.Infrastructure.Migrations
 {
     [DbContext(typeof(TenantsDbContext))]
-    [Migration("20251212222521_InitialTenants")]
-    partial class InitialTenants
+    [Migration("20251216190023_Initial_Tenants")]
+    partial class Initial_Tenants
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

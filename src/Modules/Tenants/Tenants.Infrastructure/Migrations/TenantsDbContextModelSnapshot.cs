@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Projects.Infrastructure;
+using Tenants.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace Projects.Infrastructure.Persistence.Migrations
+namespace Tenants.Infrastructure.Migrations
 {
-    [DbContext(typeof(ProjectsDbContext))]
-    [Migration("20251212222605_InitialProjects")]
-    partial class InitialProjects
+    [DbContext(typeof(TenantsDbContext))]
+    partial class TenantsDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,10 +22,18 @@ namespace Projects.Infrastructure.Persistence.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Projects.Domain.Entities.Project", b =>
+            modelBuilder.Entity("Tenants.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("AdminEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("varchar(320)");
+
+                    b.Property<string>("ConnectionString")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -45,21 +50,23 @@ namespace Projects.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
+                    b.Property<string>("Subdomain")
+                        .IsRequired()
+                        .HasMaxLength(63)
+                        .HasColumnType("varchar(63)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Name")
+                    b.HasIndex("Subdomain")
                         .IsUnique();
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Tenants", (string)null);
                 });
 
-            modelBuilder.Entity("Projects.Domain.Entities.ProjectUser", b =>
+            modelBuilder.Entity("Tenants.Domain.Entities.UserTenant", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
@@ -67,33 +74,39 @@ namespace Projects.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsOwner")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("char(36)");
-
                     b.Property<int>("Role")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("ProjectId", "UserId")
+                    b.HasIndex("UserId", "TenantId")
                         .IsUnique();
 
-                    b.ToTable("ProjectUsers", (string)null);
+                    b.ToTable("UserTenants", (string)null);
                 });
 
-            modelBuilder.Entity("Projects.Infrastructure.Persistence.Sharding.ShardMapEntry", b =>
+            modelBuilder.Entity("Tenants.Infrastructure.Persistence.Sharding.ShardMapEntry", b =>
                 {
                     b.Property<Guid>("TenantId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
                     b.Property<string>("ConnectionString")

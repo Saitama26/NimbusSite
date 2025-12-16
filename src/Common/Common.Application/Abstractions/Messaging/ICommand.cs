@@ -1,5 +1,3 @@
-using Common.Domain.Results;
-
 namespace Common.Application.Abstractions.Messaging;
 
 /// <summary>

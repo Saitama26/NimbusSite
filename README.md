@@ -13,59 +13,51 @@
 ## Запуск
 
 ### Требования
-- Docker & Docker Compose
-- .NET 10.0 SDK (для разработки)
+- Docker и Docker Compose
+- .NET 10.0 SDK (нужно только для локальной разработки/сборки)
 
-### Быстрый старт
-
+### Шаги
 1. Клонировать репозиторий:
-```bash
-git clone <repository-url>
-cd NimbusSite
-```
+   ```bash
+   git clone <repository-url>
+   cd NimbusSite
+   ```
 
-2. Запустить все сервисы:
-```bash
-docker-compose up --build
-```
+2. (Опционально) создать `.env` в корне с вашими значениями:
+   ```
+   KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+   JWT__SECRETKEY=<secret>
+   JWT__ISSUER=NimbusSite
+   JWT__AUDIENCE=NimbusSite-Users
+   ```
+   Если не создавать, возьмутся значения из `docker-compose.yml`.
 
-3. API доступны:
-- **Tenants**: http://localhost:5001
-- **Users**: http://localhost:5002
-- **Projects**: http://localhost:5003
-- **Tasks**: http://localhost:5004
-- **Identity**: http://localhost:5005
-- **AccessPermissions**: http://localhost:5006
+3. Запустить все сервисы:
+   ```bash
+   docker-compose up --build -d
+   ```
+   - MySQL создаст базы из `scripts/init-databases.sql`.
+   - Миграции применяются при старте API (в Development включено).
 
-Swagger UI доступен на корневом пути каждого API (например, http://localhost:5001).
+4. Доступы по умолчанию:
+   - Tenants: http://localhost:5001
+   - Users: http://localhost:5002
+   - Projects: http://localhost:5003
+   - Tasks: http://localhost:5004
+   - Identity: http://localhost:5005
+   - AccessPermissions: http://localhost:5006
+   Swagger UI на корне каждого API (например, http://localhost:5001).
 
 ### Полезные команды
-
-**Остановить все сервисы:**
-```bash
-docker-compose down
-```
-
-**Перезапустить только API сервисы:**
-```bash
-docker-compose restart tenants-api users-api projects-api tasks-api identity-api accesspermissions-api
-```
-
-**Просмотреть логи:**
-```bash
-docker-compose logs -f <service-name>
-# Например: docker-compose logs -f projects-api
-```
-
-**Проверить топики Kafka:**
-```bash
-docker exec -it nimbussite-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
-```
-
-**Подключиться к MySQL:**
-```bash
-docker exec -it nimbussite-mysql mysql -uroot -psqlPassword123
-```
+- Остановить всё: `docker-compose down`
+- Перезапустить только API:  
+  `docker-compose restart tenants-api users-api projects-api tasks-api identity-api accesspermissions-api`
+- Логи сервиса:  
+  `docker-compose logs -f <service-name>`
+- Список топиков Kafka:  
+  `docker exec -it nimbussite-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list`
+- Подключиться к MySQL:  
+  `docker exec -it nimbussite-mysql mysql -uroot -psqlPassword123`
 
 ## Что реализовано
 

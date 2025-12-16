@@ -3,11 +3,9 @@ using Common.Application.Abstractions.Messaging;
 using Common.Domain.Events;
 using Common.Domain.Results;
 using Tenants.Application.Abstractions;
-using Tenants.Application.Commands.CreateTenant;
 using Tenants.Domain.Entities;
 using Tenants.Domain.Enums;
 using Contracts.Tenants;
-using Tenants.Domain.Errors;
 using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.CreateTenant;

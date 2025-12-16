@@ -8,7 +8,7 @@ using Tasks.Infrastructure;
 
 #nullable disable
 
-namespace Tasks.Infrastructure.Persistence.Migrations
+namespace Tasks.Infrastructure.Migrations
 {
     [DbContext(typeof(TasksDbContext))]
     partial class TasksDbContextModelSnapshot : ModelSnapshot
@@ -99,6 +99,91 @@ namespace Tasks.Infrastructure.Persistence.Migrations
                     b.HasKey("TenantId");
 
                     b.ToTable("ShardMap", (string)null);
+                });
+
+            modelBuilder.Entity("Tasks.Infrastructure.Views.ProjectsViews.ProjectView", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("Name");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("Status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("TenantId");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_Projects", (string)null);
+                });
+
+            modelBuilder.Entity("Tasks.Infrastructure.Views.TenantsViews.TenantView", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("Name");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("Status");
+
+                    b.Property<string>("Subdomain")
+                        .HasColumnType("longtext")
+                        .HasColumnName("Subdomain");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_Tenants", (string)null);
+                });
+
+            modelBuilder.Entity("Tasks.Infrastructure.Views.UsersViews.UserView", b =>
+                {
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("Email");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("Name");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("Status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_Users", (string)null);
                 });
 #pragma warning restore 612, 618
         }

@@ -137,6 +137,8 @@ services:
       KAFKA_TOPIC_PREFIX: domain-events
       PROJECTS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Projects;User=root;Password=sqlPassword123;CharSet=utf8mb4;
       ConnectionStrings__DefaultConnection: Server=mysql;Port=3306;Database=NimbusSite_Projects;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      USERS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Users;User=root;Password=sqlPassword123;CharSet=utf8mb4;
+      TENANTS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Tenants;User=root;Password=sqlPassword123;CharSet=utf8mb4;
     depends_on:
       mysql:
         condition: service_healthy
@@ -190,6 +192,7 @@ services:
       JWT__SECRETKEY: your-secret-key-here-change-in-production
       JWT__ISSUER: NimbusSite
       JWT__AUDIENCE: NimbusSite-Users
+      USERS_DB_CONNECTION_STRING: Server=mysql;Port=3306;Database=NimbusSite_Users;User=root;Password=sqlPassword123;CharSet=utf8mb4;
     depends_on:
       mysql:
         condition: service_healthy
@@ -232,4 +235,3 @@ volumes:
 networks:
   nimbussite-network:
     driver: bridge
-

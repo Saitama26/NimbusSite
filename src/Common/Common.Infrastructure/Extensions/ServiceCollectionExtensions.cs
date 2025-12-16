@@ -1,4 +1,3 @@
-using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
 using Common.Infrastructure.Events;
 using Common.Infrastructure.Messaging;
@@ -45,27 +44,60 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
     {
-        var handlerTypes = assembly.GetTypes()
-            .Where(t => !t.IsInterface && !t.IsAbstract)
-            .Where(t => t.GetInterfaces().Any(i =>
-                i.IsGenericType &&
-                (i.GetGenericTypeDefinition() == typeof(ICommandHandler<>) ||
-                 i.GetGenericTypeDefinition() == typeof(ICommandHandler<,>) ||
-                 i.GetGenericTypeDefinition() == typeof(IQueryHandler<,>))))
+        Type[] types;
+        try
+        {
+            types = assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex)
+        {
+            types = ex.Types.Where(t => t != null).ToArray()!;
+        }
+        catch (Exception)
+        {
+            // Если не удалось загрузить типы, пропускаем эту сборку
+            return;
+        }
+
+        var handlerTypes = types
+            .Where(t => t != null && !t.IsInterface && !t.IsAbstract && !t.IsGenericTypeDefinition)
+            .Where(t =>
+            {
+                try
+                {
+                    return t.GetInterfaces().Any(i =>
+                        i.IsGenericType &&
+                        (i.GetGenericTypeDefinition() == typeof(ICommandHandler<>) ||
+                         i.GetGenericTypeDefinition() == typeof(ICommandHandler<,>) ||
+                         i.GetGenericTypeDefinition() == typeof(IQueryHandler<,>)));
+                }
+                catch
+                {
+                    return false;
+                }
+            })
             .ToList();
 
         foreach (var handlerType in handlerTypes)
         {
-            var interfaces = handlerType.GetInterfaces()
-                .Where(i => i.IsGenericType &&
-                    (i.GetGenericTypeDefinition() == typeof(ICommandHandler<>) ||
-                     i.GetGenericTypeDefinition() == typeof(ICommandHandler<,>) ||
-                     i.GetGenericTypeDefinition() == typeof(IQueryHandler<,>)))
-                .ToList();
-
-            foreach (var interfaceType in interfaces)
+            try
             {
-                services.AddScoped(interfaceType, handlerType);
+                var interfaces = handlerType.GetInterfaces()
+                    .Where(i => i.IsGenericType &&
+                        (i.GetGenericTypeDefinition() == typeof(ICommandHandler<>) ||
+                         i.GetGenericTypeDefinition() == typeof(ICommandHandler<,>) ||
+                         i.GetGenericTypeDefinition() == typeof(IQueryHandler<,>)))
+                    .ToList();
+
+                foreach (var interfaceType in interfaces)
+                {
+                    services.AddScoped(interfaceType, handlerType);
+                }
+            }
+            catch
+            {
+                // Пропускаем обработчик, если не удалось зарегистрировать
+                continue;
             }
         }
     }

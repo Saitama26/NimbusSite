@@ -16,9 +16,12 @@ ProjectRootHelper.LoadEnvFromProjectRoot();
 builder.Services
     .AddProjectsApplication()
     .AddProjectsInfrastructure(builder.Configuration)
-    .AddTenantsInfrastructure(builder.Configuration) // Для доступа к IUserTenantRepository
-    .AddUsersInfrastructure(builder.Configuration) // Для доступа к IUserRepository
-    .AddCommonInfrastructure(builder.Configuration, typeof(Projects.Application.Commands.CreateProject.CreateProjectCommand).Assembly);
+    .AddTenantsInfrastructure(builder.Configuration) 
+    .AddUsersInfrastructure(builder.Configuration) 
+    .AddCommonInfrastructure(
+        builder.Configuration, 
+        typeof(Projects.Application.Commands.CreateProject.CreateProjectCommand).Assembly,
+        typeof(Tenants.Application.Commands.CreateTenant.CreateTenantCommand).Assembly); 
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -67,7 +70,6 @@ if (app.Environment.IsDevelopment())
         {
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred while migrating the database.");
-            // Не падаем, если миграции не применились - возможно БД еще не готова
         }
     }
 }
