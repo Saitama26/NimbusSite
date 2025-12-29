@@ -8,6 +8,7 @@ namespace Identity.Application.Abstractions.Views;
 public interface IUserViewRepository
 {
     Task<UserViewDto?> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<UserViewDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserViewDto>> GetByIdsAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid userId, CancellationToken cancellationToken = default);
 }

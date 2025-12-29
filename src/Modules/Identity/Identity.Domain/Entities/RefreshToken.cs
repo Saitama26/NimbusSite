@@ -4,8 +4,9 @@ namespace Identity.Domain.Entities;
 
 /// <summary>
 /// Токен обновления для аутентификации пользователя
+/// Существует в tenant-специфичной БД со схемой Identity
 /// </summary>
-public class RefreshToken : BaseEntity, IAggregateRoot
+public class RefreshToken : BaseEntity
 {
     /// <summary>
     /// Идентификатор пользователя (из модуля Users)
@@ -13,9 +14,9 @@ public class RefreshToken : BaseEntity, IAggregateRoot
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Идентификатор тенанта
+    /// Tenant ID (числовой идентификатор тенанта)
     /// </summary>
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Значение токена (хеш)

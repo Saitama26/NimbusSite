@@ -10,10 +10,18 @@ public static class TenantErrors
     /// <summary>
     /// Тенант не найден
     /// </summary>
-    public static Error NotFound(Guid tenantId) =>
+    public static Error NotFound(int tenantInt) =>
         Error.NotFound(
             "Tenant.NotFound",
-            $"Tenant with ID {tenantId} was not found.");
+            $"Tenant with TenantInt {tenantInt} was not found.");
+
+    /// <summary>
+    /// Тенант не найден по имени
+    /// </summary>
+    public static Error NotFoundByName(string name) =>
+        Error.NotFound(
+            "Tenant.NotFound",
+            $"Tenant with name '{name}' was not found.");
 
     /// <summary>
     /// Тенант с указанным поддоменом уже существует

@@ -1,38 +1,43 @@
-using AutoMapper;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Tenants.Application.Abstractions;
-using Tenants.Application.DTOs;
 using Tenants.Application.Queries.GetTenantById;
 using Tenants.Domain.Errors;
 
 namespace Tenants.Application.Queries.GetTenantById;
 
 /// <summary>
-/// Обработчик запроса получения тенанта по ID
+/// Обработчик запроса получения тенанта по числовому идентификатору
 /// </summary>
 internal sealed class GetTenantByIdQueryHandler : IQueryHandler<GetTenantByIdQuery, TenantDto>
 {
-    private readonly ITenantRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly ITenantsDbContext _dbContext;
 
-    public GetTenantByIdQueryHandler(ITenantRepository repository, IMapper mapper)
+    public GetTenantByIdQueryHandler(ITenantsDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
     public async Task<Result<TenantDto>> Handle(GetTenantByIdQuery query, CancellationToken cancellationToken)
     {
-        // Найти тенанта
-        var tenant = await _repository.GetByIdAsync(query.TenantId, cancellationToken);
+        var tenant = await _dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TenantInt == query.TenantInt, cancellationToken);
+
         if (tenant == null)
         {
-            return Result<TenantDto>.Failure(TenantErrors.NotFound(query.TenantId));
+            return Result<TenantDto>.Failure(TenantErrors.NotFound(query.TenantInt));
         }
 
-        // Маппинг в DTO
-        var dto = _mapper.Map<TenantDto>(tenant);
+        var dto = new TenantDto(
+            tenant.TenantInt,
+            tenant.Name,
+            tenant.Status,
+            tenant.CreatedAt,
+            tenant.UpdatedAt,
+            tenant.Description,
+            tenant.ConnectionString);
 
         return Result<TenantDto>.Success(dto);
     }

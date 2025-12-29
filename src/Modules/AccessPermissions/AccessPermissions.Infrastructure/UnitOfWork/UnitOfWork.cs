@@ -1,4 +1,4 @@
-using AccessPermissions.Application.Abstractions;
+using Common.Application.Abstractions;
 using AccessPermissions.Infrastructure;
 
 namespace AccessPermissions.Infrastructure.UnitOfWork;

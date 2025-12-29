@@ -1,54 +1,65 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
 using Identity.Application.Abstractions;
-using Identity.Application.DTOs;
-using Identity.Domain.Entities;
+using Identity.Application.Queries.GetSession;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Application.Queries.GetSessions;
 
 /// <summary>
 /// Запрос получения списка сессий
 /// </summary>
-public sealed record GetSessionsQuery(Guid? UserId = null, Guid? TenantId = null) : IQuery<IQueryable<SessionDto>>;
+public sealed record GetSessionsQuery(Guid? UserId = null, int? TenantId = null) : IQuery<IEnumerable<SessionDto>>;
 
 /// <summary>
 /// Обработчик запроса получения списка сессий
 /// </summary>
-internal sealed class GetSessionsQueryHandler : IQueryHandler<GetSessionsQuery, IQueryable<SessionDto>>
+internal sealed class GetSessionsQueryHandler : IQueryHandler<GetSessionsQuery, IEnumerable<SessionDto>>
 {
-    private readonly ISessionRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly IIdentityDbContext _dbContext;
 
-    public GetSessionsQueryHandler(ISessionRepository repository, IMapper mapper)
+    public GetSessionsQueryHandler(IIdentityDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
-    public async Task<Result<IQueryable<SessionDto>>> Handle(GetSessionsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<SessionDto>>> Handle(GetSessionsQuery query, CancellationToken cancellationToken)
     {
-        IQueryable<Session> sessions;
+        var sessionsQuery = _dbContext.Sessions.AsNoTracking();
 
         if (query.UserId.HasValue)
         {
-            sessions = await _repository.GetByUserIdAsync(query.UserId.Value, cancellationToken);
-        }
-        else if (query.TenantId.HasValue)
-        {
-            sessions = await _repository.GetByTenantIdAsync(query.TenantId.Value, cancellationToken);
-        }
-        else
-        {
-            // Если не указаны фильтры, возвращаем пустой результат
-            // В реальном приложении может потребоваться ограничение доступа
-            await System.Threading.Tasks.Task.CompletedTask;
-            sessions = Enumerable.Empty<Session>().AsQueryable();
+            sessionsQuery = sessionsQuery.Where(s => s.UserId == query.UserId.Value);
         }
 
-        var dtoQueryable = sessions.ProjectTo<SessionDto>(_mapper.ConfigurationProvider);
-        return Result<IQueryable<SessionDto>>.Success(dtoQueryable);
+        if (query.TenantId.HasValue)
+        {
+            sessionsQuery = sessionsQuery.Where(s => s.TenantId == query.TenantId.Value);
+        }
+
+        // Если не указаны фильтры, возвращаем пустой результат
+        if (!query.UserId.HasValue && !query.TenantId.HasValue)
+        {
+            return Result<IEnumerable<SessionDto>>.Success(Enumerable.Empty<SessionDto>());
+        }
+
+        var sessions = await sessionsQuery
+            .Select(s => new SessionDto(
+                s.Id,
+                s.UserId,
+                s.TenantId,
+                s.RefreshTokenId,
+                s.Status,
+                s.IpAddress,
+                s.UserAgent,
+                s.LastActivityAt,
+                s.ExpiresAt,
+                s.ClosedAt,
+                s.CloseReason,
+                s.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return Result<IEnumerable<SessionDto>>.Success(sessions);
     }
 }
 

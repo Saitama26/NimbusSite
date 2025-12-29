@@ -11,6 +11,7 @@ internal sealed class UserViewConfiguration : IEntityTypeConfiguration<UserView>
         builder.HasNoKey();
 
         builder.Property(x => x.Id).HasColumnName("Id");
+        builder.Property(x => x.TenantId).HasColumnName("TenantId");
         builder.Property(x => x.Email).HasColumnName("Email");
         builder.Property(x => x.Name).HasColumnName("Name");
         builder.Property(x => x.Status).HasColumnName("Status");

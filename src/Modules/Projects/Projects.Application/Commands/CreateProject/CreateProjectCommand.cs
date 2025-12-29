@@ -1,33 +1,27 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions;
+using Projects.Application.Abstractions.Views;
+using Projects.Contracts.Events;
+using Projects.Contracts.Enums;
 using Projects.Domain.Entities;
 using Projects.Domain.Enums;
 using Projects.Domain.Errors;
-using Contracts.Projects;
-using Contracts.Projects.Events;
-using Tenants.Application.Abstractions;
-using Tenants.Application.Commands.CreateTenant;
-using Users.Domain.Enums;
-using Users.Application.Abstractions;
 
 namespace Projects.Application.Commands.CreateProject;
 
 /// <summary>
-/// Команда создания проекта.
-/// Если у пользователя нет тенанта, он будет создан автоматически.
+/// Команда создания проекта
+/// Проект создается в tenant-специфичной БД (таблицы в корне базы данных без схем)
 /// </summary>
-/// <param name="UserId">Идентификатор пользователя, создающего проект</param>
-/// <param name="Name">Название проекта (обязательное, должно быть уникальным в рамках тенанта)</param>
-/// <param name="Description">Описание проекта (необязательное)</param>
-/// <param name="TenantName">Название тенанта (используется только если тенант создается автоматически)</param>
 public sealed record CreateProjectCommand(
-    Guid UserId,
+    int TenantId,
+    Guid CreatedByUserId,
     string Name,
-    string? Description = null,
-    string? TenantName = null) : ICommand<CreateProjectResponse>;
+    string? Description = null) : ICommand<CreateProjectResponse>;
 
 /// <summary>
 /// Ответ при создании проекта.
@@ -36,31 +30,25 @@ public sealed record CreateProjectCommand(
 public sealed record CreateProjectResponse(Guid ProjectId);
 
 /// <summary>
-/// Обработчик создания проекта.
+/// Обработчик создания проекта
 /// </summary>
 internal sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjectCommand, CreateProjectResponse>
 {
-    private readonly IProjectRepository _repository;
-    private readonly Projects.Application.Abstractions.IUnitOfWork _unitOfWork;
+    private readonly IProjectsDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
-    private readonly ISender _sender;
-    private readonly IUserTenantRepository _userTenantRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserViewRepository _userViewRepository;
 
     public CreateProjectCommandHandler(
-        IProjectRepository repository,
-        Projects.Application.Abstractions.IUnitOfWork unitOfWork,
+        IProjectsDbContext dbContext,
+        IUnitOfWork unitOfWork,
         IEventBus eventBus,
-        ISender sender,
-        IUserTenantRepository userTenantRepository,
-        IUserRepository userRepository)
+        IUserViewRepository userViewRepository)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
-        _sender = sender;
-        _userTenantRepository = userTenantRepository;
-        _userRepository = userRepository;
+        _userViewRepository = userViewRepository;
     }
 
     public async Task<Result<CreateProjectResponse>> Handle(CreateProjectCommand command, CancellationToken cancellationToken)
@@ -71,54 +59,16 @@ internal sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjec
             return Result<CreateProjectResponse>.Failure(ProjectErrors.NameEmpty);
         }
 
-        // Проверяем существование пользователя
-        var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
-        if (user == null)
+        // Проверяем существование пользователя через View
+        var userExists = await _userViewRepository.ExistsAsync(command.CreatedByUserId, cancellationToken);
+        if (!userExists)
         {
-            return Result<CreateProjectResponse>.Failure(ProjectErrors.UserNotFound(command.UserId));
-        }
-
-        // Проверяем, есть ли у пользователя тенант, которым он владеет
-        var hasOwnerTenant = await _userTenantRepository.HasOwnerTenantAsync(command.UserId, cancellationToken);
-        Guid tenantId;
-
-        if (!hasOwnerTenant)
-        {
-            // Создаем тенант автоматически
-            var tenantName = !string.IsNullOrWhiteSpace(command.TenantName)
-                ? command.TenantName.Trim()
-                : $"{name} Tenant"; // Используем название проекта как название тенанта
-
-            var createTenantCommand = new CreateTenantCommand(
-                tenantName,
-                command.UserId,
-                null, // ConnectionString
-                $"Tenant created automatically for project {name}");
-
-            var createTenantResult = await _sender.Send<CreateTenantCommand, CreateTenantResponse>(createTenantCommand, cancellationToken);
-            if (!createTenantResult.IsSuccess)
-            {
-                return Result<CreateProjectResponse>.Failure(createTenantResult.Error!);
-            }
-
-            tenantId = createTenantResult.Value!.TenantId;
-
-            // UserTenant будет создан автоматически через обработчик события TenantCreatedEvent
-            // Обработчик события создаст связь UserTenant с IsOwner = true
-        }
-        else
-        {
-            // Получаем тенант, которым владеет пользователь
-            var ownerTenant = await _userTenantRepository.GetOwnerTenantByUserIdAsync(command.UserId, cancellationToken);
-            if (ownerTenant == null)
-            {
-                return Result<CreateProjectResponse>.Failure(ProjectErrors.NotFound(Guid.Empty));
-            }
-            tenantId = ownerTenant.TenantId;
+            return Result<CreateProjectResponse>.Failure(ProjectErrors.UserNotFound(command.CreatedByUserId));
         }
 
         // Проверяем уникальность имени проекта в рамках тенанта
-        var exists = await _repository.ExistsByNameAsync(tenantId, name, cancellationToken);
+        var exists = await _dbContext.Projects
+            .AnyAsync(p => p.TenantId == command.TenantId && p.Name == name, cancellationToken);
         if (exists)
         {
             return Result<CreateProjectResponse>.Failure(ProjectErrors.NameAlreadyExists(name));
@@ -127,28 +77,26 @@ internal sealed class CreateProjectCommandHandler : ICommandHandler<CreateProjec
         // Создаем проект
         var project = new Project
         {
-            TenantId = tenantId,
+            TenantId = command.TenantId,
             Name = name,
             Description = command.Description?.Trim(),
             Status = ProjectStatus.Active,
         };
 
-        var events = new List<IDomainEvent>
-        {
-            new ProjectCreatedEvent(
-                project.Id,
-                project.TenantId,
-                command.UserId,
-                project.Name,
-                (ProjectStatusContract)(int)project.Status,
-                project.Description,
-                project.CreatedAt)
-        };
-
-        await _repository.AddAsync(project, cancellationToken);
+        _dbContext.Projects.Add(project);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new ProjectCreatedEvent(
+            project.Id,
+            project.TenantId,
+            command.CreatedByUserId,
+            project.Name,
+            (ProjectStatusContract)(int)project.Status,
+            project.Description,
+            project.CreatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result<CreateProjectResponse>.Success(new CreateProjectResponse(project.Id));
     }

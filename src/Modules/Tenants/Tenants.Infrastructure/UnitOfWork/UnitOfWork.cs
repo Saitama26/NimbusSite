@@ -1,4 +1,4 @@
-using Tenants.Application.Abstractions;
+using Common.Application.Abstractions;
 using Tenants.Infrastructure.Persistence;
 
 namespace Tenants.Infrastructure;

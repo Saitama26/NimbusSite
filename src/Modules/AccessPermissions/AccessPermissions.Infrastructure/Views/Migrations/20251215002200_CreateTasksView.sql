@@ -1,4 +1,4 @@
-CREATE VIEW vw_Tasks AS
+CREATE OR REPLACE VIEW vw_Tasks AS
 SELECT 
     Id,
     ProjectId,
@@ -6,5 +6,5 @@ SELECT
     Title,
     Status,
     UpdatedAt
-FROM NimbusSite_Tasks.Tasks;
+FROM Tasks;
 

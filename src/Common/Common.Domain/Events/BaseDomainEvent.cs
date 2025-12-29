@@ -1,20 +1,21 @@
 namespace Common.Domain.Events;
 
 /// <summary>
-/// Базовая реализация доменного события
+/// Базовая реализация интеграционного события
+/// Используется для асинхронного взаимодействия между модулями через Kafka
 /// </summary>
-public abstract class BaseDomainEvent : IDomainEvent
+public abstract class BaseIntegrationEvent : IIntegrationEvent
 {
-    public Guid EventId { get; }
-    public DateTime OccurredOn { get; }
+    public Guid EventId { get; init; }
+    public DateTime OccurredOn { get; init; }
 
-    protected BaseDomainEvent()
+    protected BaseIntegrationEvent()
     {
         EventId = Guid.NewGuid();
         OccurredOn = DateTime.UtcNow;
     }
 
-    protected BaseDomainEvent(Guid eventId, DateTime occurredOn)
+    protected BaseIntegrationEvent(Guid eventId, DateTime occurredOn)
     {
         EventId = eventId;
         OccurredOn = occurredOn;

@@ -1,59 +1,61 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
 using AccessPermissions.Application.Abstractions;
+using AccessPermissions.Contracts.Events;
 using AccessPermissions.Domain.Errors;
-using Contracts.AccessPermissions.Events;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessPermissions.Application.Commands.DeleteAccessPermission;
 
 /// <summary>
 /// Команда удаления разрешения доступа
 /// </summary>
-public sealed record DeleteAccessPermissionCommand(Guid PermissionId) : ICommand;
+public sealed record DeleteAccessPermissionCommand(
+    Guid PermissionId,
+    int TenantId) : ICommand;
 
 /// <summary>
 /// Обработчик команды удаления разрешения доступа
 /// </summary>
 internal sealed class DeleteAccessPermissionCommandHandler : ICommandHandler<DeleteAccessPermissionCommand>
 {
-    private readonly IAccessPermissionRepository _repository;
+    private readonly IAccessPermissionsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public DeleteAccessPermissionCommandHandler(
-        IAccessPermissionRepository repository,
+        IAccessPermissionsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(DeleteAccessPermissionCommand command, CancellationToken cancellationToken)
     {
-        var permission = await _repository.GetByIdAsync(command.PermissionId, cancellationToken);
+        var permission = await _dbContext.AccessPermissions
+            .FirstOrDefaultAsync(p => p.Id == command.PermissionId && p.TenantId == command.TenantId, cancellationToken);
         if (permission == null)
         {
             return Result.Failure(AccessPermissionErrors.NotFound(command.PermissionId));
         }
 
-        var events = new List<IDomainEvent>
-        {
-            new AccessPermissionDeletedEvent(
-                permission.Id,
-                permission.TenantId,
-                permission.UserId,
-                DateTime.UtcNow)
-        };
-
-        await _repository.DeleteAsync(permission, cancellationToken);
+        _dbContext.AccessPermissions.Remove(permission);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new AccessPermissionDeletedEvent(
+            permission.Id,
+            permission.TenantId,
+            permission.UserId,
+            DateTime.UtcNow);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }

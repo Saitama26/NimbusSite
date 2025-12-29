@@ -1,15 +1,15 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Users.Application.Abstractions;
-using Users.Application.Commands.RegisterUser;
+using Users.Contracts.Events;
+using Users.Contracts.Enums;
 using Users.Domain.Entities;
 using Users.Domain.Enums;
-using Contracts.Users;
 using Users.Domain.Errors;
-using Contracts.Users.Events;
 using BCrypt.Net;
 
 namespace Users.Application.Commands.RegisterUser;
@@ -19,6 +19,7 @@ namespace Users.Application.Commands.RegisterUser;
 /// Создает User и публикует событие UserRegisteredEvent с хешем пароля
 /// </summary>
 public sealed record RegisterUserCommand(
+    int TenantId,
     string Email,
     string Password,
     string Name,
@@ -35,17 +36,17 @@ public sealed record RegisterUserResponse(Guid UserId);
 /// </summary>
 internal sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserCommand, RegisterUserResponse>
 {
-    private readonly IUserRepository _repository;
+    private readonly IUsersDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
     private const int BcryptWorkFactor = 12;
 
     public RegisterUserCommandHandler(
-        IUserRepository repository,
+        IUsersDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
@@ -64,8 +65,9 @@ internal sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserC
             return Result<RegisterUserResponse>.Failure(UserErrors.InvalidEmailFormat);
         }
 
-        // Проверка уникальности email (глобально)
-        var exists = await _repository.ExistsByEmailAsync(emailLower, cancellationToken);
+        // Проверка уникальности email в рамках тенанта
+        var exists = await _dbContext.Users
+            .AnyAsync(u => u.TenantId == command.TenantId && u.Email == emailLower, cancellationToken);
         if (exists)
         {
             return Result<RegisterUserResponse>.Failure(UserErrors.EmailAlreadyExists(emailLower));
@@ -98,9 +100,10 @@ internal sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserC
         // Хеширование пароля
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(command.Password, BcryptWorkFactor);
 
-        // Создание пользователя (без тенанта)
+        // Создание пользователя
         var user = new User
         {
+            TenantId = command.TenantId,
             Email = emailLower,
             Name = name,
             Status = UserStatus.Active,
@@ -108,37 +111,33 @@ internal sealed class RegisterUserCommandHandler : ICommandHandler<RegisterUserC
             Bio = command.Bio?.Trim(),
         };
 
-        // Публикация событий
-        var events = new List<IDomainEvent>
-        {
-            // UserCreatedEvent для обратной совместимости (создаст UserCredentials с пустым паролем)
-            new UserCreatedEvent(
-                user.Id,
-                user.Email,
-                user.Name,
-                (UserStatusContract)(int)user.Status,
-                user.Phone,
-                user.Bio,
-                user.CreatedAt),
-            
-            // UserRegisteredEvent с хешем пароля (обновит UserCredentials с паролем)
-            new UserRegisteredEvent(
-                user.Id,
-                user.Email,
-                user.Name,
-                (UserStatusContract)(int)user.Status,
-                passwordHash,
-                user.Phone,
-                user.Bio,
-                user.CreatedAt)
-        };
-
-        // Сохранение
-        await _repository.AddAsync(user, cancellationToken);
+        _dbContext.Users.Add(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Публикация событий в очередь
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционных событий
+        var createdEvent = new UserCreatedEvent(
+            user.Id,
+            user.TenantId,
+            user.Email,
+            user.Name,
+            (UserStatusContract)(int)user.Status,
+            user.Phone,
+            user.Bio,
+            user.CreatedAt);
+
+        var registeredEvent = new UserRegisteredEvent(
+            user.Id,
+            user.TenantId,
+            user.Email,
+            user.Name,
+            (UserStatusContract)(int)user.Status,
+            passwordHash,
+            user.Phone,
+            user.Bio,
+            user.CreatedAt);
+
+        await _eventBus.PublishAsync(createdEvent, cancellationToken);
+        await _eventBus.PublishAsync(registeredEvent, cancellationToken);
 
         return Result<RegisterUserResponse>.Success(new RegisterUserResponse(user.Id));
     }
@@ -151,6 +150,9 @@ internal sealed class RegisterUserCommandValidator : AbstractValidator<RegisterU
 {
     public RegisterUserCommandValidator()
     {
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID is required.");
+
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.")

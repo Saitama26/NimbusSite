@@ -9,8 +9,8 @@ internal sealed class UpdateTenantConnectionStringCommandValidator : AbstractVal
 {
     public UpdateTenantConnectionStringCommandValidator()
     {
-        RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
+        RuleFor(x => x.TenantInt)
+            .GreaterThan(0).WithMessage("TenantInt must be greater than zero.");
 
         RuleFor(x => x.ConnectionString)
             .NotEmpty().WithMessage("Connection string is required.")

@@ -11,8 +11,8 @@ internal sealed class ChangeTenantStatusCommandValidator : AbstractValidator<Cha
 {
     public ChangeTenantStatusCommandValidator()
     {
-        RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
+        RuleFor(x => x.TenantInt)
+            .GreaterThan(0).WithMessage("TenantInt must be greater than zero.");
 
         RuleFor(x => x.NewStatus)
             .IsInEnum().WithMessage("Invalid tenant status.");

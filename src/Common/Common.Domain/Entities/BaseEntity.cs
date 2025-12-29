@@ -1,7 +1,8 @@
 namespace Common.Domain.Entities;
 
 /// <summary>
-/// Базовая реализация сущности с поддержкой доменных событий
+/// Базовая реализация сущности
+/// Простая сущность без доменной логики
 /// </summary>
 public abstract class BaseEntity : IBaseEntity
 {

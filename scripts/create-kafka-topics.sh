@@ -4,7 +4,7 @@
 # Использование: ./scripts/create-kafka-topics.sh
 
 KAFKA_BOOTSTRAP_SERVER="${KAFKA_BOOTSTRAP_SERVER:-kafka:9092}"
-MAX_RETRIES=30
+MAX_RETRIES=90
 RETRY_DELAY=2
 
 # Функция для проверки доступности Kafka
@@ -65,6 +65,18 @@ TOPICS=(
 if ! wait_for_kafka; then
     echo "Failed to connect to Kafka. Exiting."
     exit 1
+fi
+
+# Проверяем, существует ли последний топик (если да, значит все топики уже созданы)
+LAST_TOPIC="${TOPICS[-1]}"
+if /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP_SERVER --list 2>/dev/null | grep -q "^${LAST_TOPIC}$"; then
+    echo "Topic '$LAST_TOPIC' already exists. All topics are already created. Skipping creation."
+    echo ""
+    echo "Listing all topics:"
+    /opt/kafka/bin/kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP_SERVER --list
+    echo ""
+    echo "All topics already exist. Exiting successfully."
+    exit 0
 fi
 
 # Создаем топики

@@ -4,29 +4,35 @@ using Tenants.Domain.Enums;
 namespace Tenants.Domain.Entities;
 
 /// <summary>
-/// Сущность тенанта - агрегатный корень домена Tenants
+/// Сущность тенанта
+/// Хранится в центральной БД NimbusSite_Tenants (таблицы в корне базы данных без схем)
 /// </summary>
-public class Tenant : BaseEntity, IAggregateRoot
+public class Tenant : IBaseEntity
 {
     /// <summary>
-    /// Название тенанта
+    /// Числовой идентификатор тенанта (Primary Key, Auto Increment)
+    /// </summary>
+    public int TenantInt { get; set; }
+
+    /// <summary>
+    /// Название тенанта (уникальное)
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Поддомен тенанта (уникальный идентификатор для URL)
-    /// </summary>
-    public string Subdomain { get; set; } = string.Empty;
-
-    /// <summary>
     /// Строка подключения к базе данных тенанта (для шардирования)
     /// </summary>
-    public string? ConnectionString { get; set; }
+    public string ConnectionString { get; set; } = string.Empty;
 
     /// <summary>
     /// Статус тенанта
     /// </summary>
     public TenantStatus Status { get; set; }
+
+    /// <summary>
+    /// Дата и время создания
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// Дата и время последнего обновления
@@ -38,12 +44,12 @@ public class Tenant : BaseEntity, IAggregateRoot
     /// </summary>
     public string? Description { get; set; }
 
-    /// <summary>
-    /// Email администратора тенанта
-    /// </summary>
-    public string? AdminEmail { get; set; }
+    // Для совместимости с IBaseEntity (используем TenantInt как Id)
+    Guid IBaseEntity.Id => Guid.Empty; // Не используется, используем TenantInt
 
-    // EF Core требует конструктор без параметров
-    public Tenant() : base() { }
+    public Tenant()
+    {
+        CreatedAt = DateTime.UtcNow;
+    }
 }
 

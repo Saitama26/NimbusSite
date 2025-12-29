@@ -1,6 +1,4 @@
-using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
-using Users.Application.Mappings;
 
 namespace Users.Application.Extensions;
 
@@ -11,17 +9,13 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Добавить Users Application сервисы
+    /// Handlers и Validators регистрируются автоматически через Common.Infrastructure
     /// </summary>
     public static IServiceCollection AddUsersApplication(this IServiceCollection services)
     {
-        // Регистрируем AutoMapper
-        services.AddAutoMapper(typeof(UserMappingProfile));
-
-        // TODO: Зарегистрировать:
-        // - Репозитории (IUserRepository) - будет в Infrastructure
-        // - Handlers регистрируются автоматически через MediatR
-        // - Validators регистрируются автоматически через FluentValidation
-        // - UnitOfWork - будет в Infrastructure
+        // Handlers регистрируются автоматически через Common.Infrastructure.AddCommonInfrastructure
+        // Validators регистрируются автоматически через FluentValidation
+        // IUsersDbContext регистрируется в Infrastructure
 
         return services;
     }

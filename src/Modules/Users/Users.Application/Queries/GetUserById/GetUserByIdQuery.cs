@@ -1,8 +1,9 @@
-using AutoMapper;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Users.Application.Abstractions;
-using Users.Application.DTOs;
+using Users.Contracts.Api.Responses;
+using Users.Contracts.Enums;
 using Users.Domain.Errors;
 
 namespace Users.Application.Queries.GetUserById;
@@ -10,35 +11,44 @@ namespace Users.Application.Queries.GetUserById;
 /// <summary>
 /// Запрос получения пользователя по ID
 /// </summary>
-public sealed record GetUserByIdQuery(Guid UserId) : IQuery<UserDto>;
+public sealed record GetUserByIdQuery(Guid UserId, int TenantId) : IQuery<UserResponse>;
 
 /// <summary>
 /// Обработчик запроса получения пользователя по ID
 /// </summary>
-internal sealed class GetUserByIdQueryHandler : IQueryHandler<GetUserByIdQuery, UserDto>
+internal sealed class GetUserByIdQueryHandler : IQueryHandler<GetUserByIdQuery, UserResponse>
 {
-    private readonly IUserRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly IUsersDbContext _dbContext;
 
-    public GetUserByIdQueryHandler(IUserRepository repository, IMapper mapper)
+    public GetUserByIdQueryHandler(IUsersDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
-    public async Task<Result<UserDto>> Handle(GetUserByIdQuery query, CancellationToken cancellationToken)
+    public async Task<Result<UserResponse>> Handle(GetUserByIdQuery query, CancellationToken cancellationToken)
     {
-        // Найти пользователя
-        var user = await _repository.GetByIdAsync(query.UserId, cancellationToken);
+        // Найти пользователя с проверкой TenantId, исключая удаленных
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == query.UserId && u.TenantId == query.TenantId && u.Status != Users.Domain.Enums.UserStatus.Deleted, cancellationToken);
         if (user == null)
         {
-            return Result<UserDto>.Failure(UserErrors.NotFound(query.UserId));
+            return Result<UserResponse>.Failure(UserErrors.NotFound(query.UserId));
         }
 
-        // Маппинг в DTO
-        var dto = _mapper.Map<UserDto>(user);
+        // Маппинг в Response
+        var response = new UserResponse(
+            user.Id,
+            user.Email,
+            user.Name,
+            (Users.Contracts.Enums.UserStatusContract)(int)user.Status,
+            user.CreatedAt,
+            user.UpdatedAt,
+            user.LastLoginAt,
+            user.Phone,
+            user.Bio);
 
-        return Result<UserDto>.Success(dto);
+        return Result<UserResponse>.Success(response);
     }
 }
 

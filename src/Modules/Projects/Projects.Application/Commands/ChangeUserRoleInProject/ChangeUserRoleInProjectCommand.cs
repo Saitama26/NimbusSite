@@ -1,12 +1,14 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions;
+using Projects.Contracts.Events;
 using Projects.Domain.Errors;
+using Users.Contracts.Enums;
 using Users.Domain.Enums;
-using Contracts.Projects.Events;
 
 namespace Projects.Application.Commands.ChangeUserRoleInProject;
 
@@ -15,6 +17,7 @@ namespace Projects.Application.Commands.ChangeUserRoleInProject;
 /// </summary>
 public sealed record ChangeUserRoleInProjectCommand(
     Guid ProjectId,
+    int TenantId,
     Guid UserId,
     UserRole NewRole) : ICommand;
 
@@ -23,34 +26,33 @@ public sealed record ChangeUserRoleInProjectCommand(
 /// </summary>
 internal sealed class ChangeUserRoleInProjectCommandHandler : ICommandHandler<ChangeUserRoleInProjectCommand>
 {
-    private readonly IProjectRepository _projectRepository;
-    private readonly IProjectUserRepository _projectUserRepository;
+    private readonly IProjectsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public ChangeUserRoleInProjectCommandHandler(
-        IProjectRepository projectRepository,
-        IProjectUserRepository projectUserRepository,
+        IProjectsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _projectRepository = projectRepository;
-        _projectUserRepository = projectUserRepository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(ChangeUserRoleInProjectCommand command, CancellationToken cancellationToken)
     {
-        // Проверяем существование проекта
-        var project = await _projectRepository.GetByIdAsync(command.ProjectId, cancellationToken);
+        // Проверяем существование проекта с фильтрацией по TenantId
+        var project = await _dbContext.Projects
+            .FirstOrDefaultAsync(p => p.Id == command.ProjectId && p.TenantId == command.TenantId, cancellationToken);
         if (project == null)
         {
             return Result.Failure(ProjectErrors.NotFound(command.ProjectId));
         }
 
         // Находим связь ProjectUser
-        var projectUser = await _projectUserRepository.GetByProjectAndUserAsync(command.ProjectId, command.UserId, cancellationToken);
+        var projectUser = await _dbContext.ProjectUsers
+            .FirstOrDefaultAsync(pu => pu.ProjectId == command.ProjectId && pu.UserId == command.UserId, cancellationToken);
         if (projectUser == null)
         {
             return Result.Failure(ProjectErrors.UserNotInProject(command.UserId, command.ProjectId));
@@ -65,22 +67,19 @@ internal sealed class ChangeUserRoleInProjectCommandHandler : ICommandHandler<Ch
         var oldRole = projectUser.Role;
         projectUser.Role = command.NewRole;
 
-        var events = new List<IDomainEvent>
-        {
-            new ProjectUserRoleChangedEvent(
-                projectUser.Id,
-                projectUser.ProjectId,
-                project.TenantId,
-                projectUser.UserId,
-                (Contracts.Users.UserRoleContract)(int)oldRole,
-                (Contracts.Users.UserRoleContract)(int)command.NewRole,
-                DateTime.UtcNow)
-        };
-
-        await _projectUserRepository.UpdateAsync(projectUser, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new ProjectUserRoleChangedEvent(
+            projectUser.Id,
+            projectUser.ProjectId,
+            project.TenantId,
+            projectUser.UserId,
+            (UserRoleContract)(int)oldRole,
+            (UserRoleContract)(int)command.NewRole,
+            DateTime.UtcNow);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }
@@ -95,6 +94,9 @@ internal sealed class ChangeUserRoleInProjectCommandValidator : AbstractValidato
     {
         RuleFor(x => x.ProjectId)
             .NotEmpty().WithMessage("Project ID is required.");
+
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID is required.");
 
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("User ID is required.");

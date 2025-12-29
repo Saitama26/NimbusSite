@@ -1,12 +1,13 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Users.Application.Abstractions;
+using Users.Contracts.Events;
 using Users.Domain.Enums;
 using Users.Domain.Errors;
-using Contracts.Users.Events;
 
 namespace Users.Application.Commands.UpdateUser;
 
@@ -15,6 +16,7 @@ namespace Users.Application.Commands.UpdateUser;
 /// </summary>
 public sealed record UpdateUserCommand(
     Guid UserId,
+    int TenantId,
     string? Name = null,
     string? Phone = null,
     string? Bio = null) : ICommand;
@@ -24,23 +26,24 @@ public sealed record UpdateUserCommand(
 /// </summary>
 internal sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserCommand>
 {
-    private readonly IUserRepository _repository;
+    private readonly IUsersDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public UpdateUserCommandHandler(
-        IUserRepository repository,
+        IUsersDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(UpdateUserCommand command, CancellationToken cancellationToken)
     {
-        var user = await _repository.GetByIdAsync(command.UserId, cancellationToken);
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == command.UserId && u.TenantId == command.TenantId, cancellationToken);
         if (user == null)
         {
             return Result.Failure(UserErrors.NotFound(command.UserId));
@@ -83,20 +86,18 @@ internal sealed class UpdateUserCommandHandler : ICommandHandler<UpdateUserComma
 
         user.UpdatedAt = DateTime.UtcNow;
 
-        var events = new List<IDomainEvent>
-        {
-            new UserUpdatedEvent(
-                user.Id,
-                user.Name,
-                user.Phone,
-                user.Bio,
-                user.UpdatedAt)
-        };
-
-        await _repository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new UserUpdatedEvent(
+            user.Id,
+            user.TenantId,
+            user.Name,
+            user.Phone,
+            user.Bio,
+            user.UpdatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }
@@ -111,6 +112,9 @@ internal sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserC
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("User ID is required.");
+
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID must be greater than 0.");
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("User name cannot be empty.")

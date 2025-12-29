@@ -1,13 +1,16 @@
 using Common.Application.Abstractions.Messaging;
+using Common.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 using Tasks.Application.Commands.AssignTask;
 using Tasks.Application.Commands.ChangeTaskStatus;
 using Tasks.Application.Commands.CreateTask;
 using Tasks.Application.Commands.DeleteTask;
 using Tasks.Application.Commands.UpdateTask;
-using Tasks.Application.DTOs;
 using Tasks.Application.Queries.GetTaskById;
 using Tasks.Application.Queries.GetTasks;
+using Tasks.Contracts.Api.Requests;
+using Tasks.Contracts.Api.Responses;
+using Tasks.Contracts.Enums;
 
 namespace Tasks.Api.Controllers;
 
@@ -33,17 +36,27 @@ public class TasksController : ControllerBase
     /// <response code="200">Успешно получен список задач</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<TaskListItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<TaskListResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IEnumerable<TaskListItemDto>>> GetTasks(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<TaskListResponse>>> GetTasks([FromQuery] int tenantId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new GetTasksQuery(), cancellationToken);
+        var result = await _sender.Send(new GetTasksQuery(tenantId), cancellationToken);
         if (!result.IsSuccess)
         {
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return Ok(result.Value?.ToList() ?? new List<TaskListItemDto>());
+        var responses = result.Value!.Select(dto => new TaskListResponse(
+            dto.Id,
+            dto.ProjectId,
+            dto.Title,
+            (TaskStatusContract)(int)dto.Status,
+            (TaskPriorityContract)(int)dto.Priority,
+            dto.AssignedToUserId,
+            dto.DueDate,
+            dto.CreatedAt));
+
+        return Ok(responses.ToList());
     }
 
     /// <summary>
@@ -56,20 +69,37 @@ public class TasksController : ControllerBase
     /// <response code="404">Задача не найдена</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpGet("{taskId:guid}")]
-    [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TaskResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<TaskDto>> GetById(Guid taskId, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaskResponse>> GetById(Guid taskId, [FromQuery] int tenantId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new GetTaskByIdQuery(taskId), cancellationToken);
+        var result = await _sender.Send(new GetTaskByIdQuery(taskId, tenantId), cancellationToken);
         if (!result.IsSuccess)
         {
-            return result.Error?.Type == Common.Domain.Results.ErrorType.NotFound
+            return result.Error?.Type == ErrorType.NotFound
                 ? NotFound(result.Error.Description)
                 : Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return Ok(result.Value!);
+        var dto = result.Value!;
+        var response = new TaskResponse(
+            dto.Id,
+            dto.TenantId,
+            dto.ProjectId,
+            dto.Title,
+            dto.Description,
+            (TaskStatusContract)(int)dto.Status,
+            (TaskPriorityContract)(int)dto.Priority,
+            dto.AssignedToUserId,
+            dto.CreatedByUserId,
+            dto.DueDate,
+            dto.CreatedAt,
+            dto.UpdatedAt,
+            dto.StartedAt,
+            dto.CompletedAt);
+
+        return Ok(response);
     }
 
     /// <summary>
@@ -82,18 +112,34 @@ public class TasksController : ControllerBase
     /// <response code="400">Ошибка валидации</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpPost]
-    [ProducesResponseType(typeof(CreateTaskResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Tasks.Contracts.Api.Responses.CreateTaskResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateTaskResponse>> Create([FromBody] CreateTaskCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult<Tasks.Contracts.Api.Responses.CreateTaskResponse>> Create(
+        [FromBody] CreateTaskRequest request,
+        [FromQuery] int tenantId,
+        [FromQuery] Guid createdByUserId,
+        CancellationToken cancellationToken)
     {
-        var result = await _sender.Send<CreateTaskCommand, CreateTaskResponse>(command, cancellationToken);
+        // TODO: Извлечь createdByUserId из JWT токена
+        var command = new CreateTaskCommand(
+            tenantId,
+            request.ProjectId,
+            request.Title,
+            createdByUserId,
+            (Tasks.Domain.Enums.TaskPriority)(int)request.Priority,
+            request.Description,
+            request.AssignedToUserId,
+            request.DueDate);
+
+        var result = await _sender.Send<CreateTaskCommand, Tasks.Application.Commands.CreateTask.CreateTaskResponse>(command, cancellationToken);
         if (!result.IsSuccess)
         {
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return CreatedAtAction(nameof(GetById), new { taskId = result.Value!.TaskId }, result.Value);
+        var response = new Tasks.Contracts.Api.Responses.CreateTaskResponse(result.Value!.TaskId);
+        return CreatedAtAction(nameof(GetById), new { taskId = response.TaskId, tenantId = tenantId }, response);
     }
 
     /// <summary>
@@ -110,9 +156,19 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(Guid taskId, [FromBody] UpdateTaskCommand body, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(
+        Guid taskId,
+        [FromBody] UpdateTaskRequest request,
+        [FromQuery] int tenantId,
+        CancellationToken cancellationToken)
     {
-        var command = body with { TaskId = taskId };
+        var command = new UpdateTaskCommand(
+            taskId,
+            tenantId,
+            request.Title,
+            request.Description,
+            request.Priority.HasValue ? (Tasks.Domain.Enums.TaskPriority?)(int)request.Priority.Value : null,
+            request.DueDate);
         var result = await _sender.Send(command, cancellationToken);
         if (!result.IsSuccess)
         {
@@ -136,9 +192,16 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ChangeStatus(Guid taskId, [FromBody] ChangeTaskStatusCommand body, CancellationToken cancellationToken)
+    public async Task<IActionResult> ChangeStatus(
+        Guid taskId,
+        [FromBody] ChangeTaskStatusRequest request,
+        [FromQuery] int tenantId,
+        CancellationToken cancellationToken)
     {
-        var command = body with { TaskId = taskId };
+        var command = new ChangeTaskStatusCommand(
+            taskId,
+            tenantId,
+            (Tasks.Domain.Enums.TaskStatus)(int)request.Status);
         var result = await _sender.Send(command, cancellationToken);
         if (!result.IsSuccess)
         {
@@ -162,9 +225,16 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Assign(Guid taskId, [FromBody] AssignTaskCommand body, CancellationToken cancellationToken)
+    public async Task<IActionResult> Assign(
+        Guid taskId,
+        [FromBody] AssignTaskRequest request,
+        [FromQuery] int tenantId,
+        CancellationToken cancellationToken)
     {
-        var command = body with { TaskId = taskId };
+        var command = new AssignTaskCommand(
+            taskId,
+            tenantId,
+            request.AssignedToUserId);
         var result = await _sender.Send(command, cancellationToken);
         if (!result.IsSuccess)
         {
@@ -189,9 +259,9 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(Guid taskId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(Guid taskId, [FromQuery] int tenantId, CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(new DeleteTaskCommand(taskId), cancellationToken);
+        var result = await _sender.Send(new DeleteTaskCommand(taskId, tenantId), cancellationToken);
         if (!result.IsSuccess)
         {
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));

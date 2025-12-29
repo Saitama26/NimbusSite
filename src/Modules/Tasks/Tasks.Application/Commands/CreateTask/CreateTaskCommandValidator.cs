@@ -10,7 +10,7 @@ internal sealed class CreateTaskCommandValidator : AbstractValidator<CreateTaskC
     public CreateTaskCommandValidator()
     {
         RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
+            .GreaterThan(0).WithMessage("Tenant ID must be greater than 0.");
 
         RuleFor(x => x.ProjectId)
             .NotEmpty().WithMessage("Project ID is required.");

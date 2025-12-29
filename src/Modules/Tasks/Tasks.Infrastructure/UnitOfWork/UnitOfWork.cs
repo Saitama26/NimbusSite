@@ -1,4 +1,4 @@
-using Tasks.Application.Abstractions;
+using Common.Application.Abstractions;
 
 namespace Tasks.Infrastructure.UnitOfWork;
 

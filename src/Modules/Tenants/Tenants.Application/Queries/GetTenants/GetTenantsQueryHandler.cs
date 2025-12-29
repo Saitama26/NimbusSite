@@ -1,37 +1,37 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Tenants.Application.Abstractions;
-using Tenants.Application.DTOs;
 using Tenants.Application.Queries.GetTenants;
+using Tenants.Domain.Enums;
 
 namespace Tenants.Application.Queries.GetTenants;
 
 /// <summary>
 /// Обработчик запроса получения списка тенантов
-/// Возвращает IQueryable для OData пагинации, фильтрации и сортировки
 /// </summary>
-internal sealed class GetTenantsQueryHandler : IQueryHandler<GetTenantsQuery, IQueryable<TenantListItemDto>>
+internal sealed class GetTenantsQueryHandler : IQueryHandler<GetTenantsQuery, IEnumerable<TenantListItemDto>>
 {
-    private readonly ITenantRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly ITenantsDbContext _dbContext;
 
-    public GetTenantsQueryHandler(ITenantRepository repository, IMapper mapper)
+    public GetTenantsQueryHandler(ITenantsDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
-    public async Task<Result<IQueryable<TenantListItemDto>>> Handle(GetTenantsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<TenantListItemDto>>> Handle(GetTenantsQuery query, CancellationToken cancellationToken)
     {
-        // Получить IQueryable тенантов
-        var tenantsQueryable = await _repository.GetAllAsync(cancellationToken);
+        var tenants = await _dbContext.Tenants
+            .AsNoTracking()
+            .OrderBy(t => t.Name)
+            .Select(t => new TenantListItemDto(
+                t.TenantInt,
+                t.Name,
+                t.Status,
+                t.CreatedAt))
+            .ToListAsync(cancellationToken);
 
-        // Маппинг через AutoMapper в DTO (ProjectTo для IQueryable)
-        var dtoQueryable = tenantsQueryable.ProjectTo<TenantListItemDto>(_mapper.ConfigurationProvider);
-
-        return Result<IQueryable<TenantListItemDto>>.Success(dtoQueryable);
+        return Result<IEnumerable<TenantListItemDto>>.Success(tenants);
     }
 }
 

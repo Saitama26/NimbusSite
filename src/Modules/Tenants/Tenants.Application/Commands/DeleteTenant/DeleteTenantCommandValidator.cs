@@ -9,8 +9,8 @@ internal sealed class DeleteTenantCommandValidator : AbstractValidator<DeleteTen
 {
     public DeleteTenantCommandValidator()
     {
-        RuleFor(x => x.TenantId)
-            .NotEmpty().WithMessage("Tenant ID is required.");
+        RuleFor(x => x.TenantInt)
+            .GreaterThan(0).WithMessage("TenantInt must be greater than zero.");
     }
 }
 

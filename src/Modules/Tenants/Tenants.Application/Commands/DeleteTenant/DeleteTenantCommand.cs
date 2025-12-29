@@ -1,46 +1,48 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Tenants.Application.Abstractions;
+using Tenants.Contracts.Events;
+using Tenants.Contracts.Enums;
 using Tenants.Domain.Enums;
-using Contracts.Tenants;
 using Tenants.Domain.Errors;
-using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.DeleteTenant;
 
 /// <summary>
 /// Команда удаления тенанта (soft delete)
 /// </summary>
-public sealed record DeleteTenantCommand(Guid TenantId) : ICommand;
+public sealed record DeleteTenantCommand(int TenantInt) : ICommand;
 
 /// <summary>
 /// Обработчик команды удаления тенанта (soft delete)
 /// </summary>
 internal sealed class DeleteTenantCommandHandler : ICommandHandler<DeleteTenantCommand>
 {
-    private readonly ITenantRepository _repository;
+    private readonly ITenantsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public DeleteTenantCommandHandler(
-        ITenantRepository repository,
+        ITenantsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(DeleteTenantCommand command, CancellationToken cancellationToken)
     {
-        // Найти тенанта
-        var tenant = await _repository.GetByIdAsync(command.TenantId, cancellationToken);
+        var tenant = await _dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.TenantInt == command.TenantInt, cancellationToken);
+
         if (tenant == null)
         {
-            return Result.Failure(TenantErrors.NotFound(command.TenantId));
+            return Result.Failure(TenantErrors.NotFound(command.TenantInt));
         }
 
         // Проверка, что тенант еще не удален
@@ -54,18 +56,22 @@ internal sealed class DeleteTenantCommandHandler : ICommandHandler<DeleteTenantC
         // Soft delete - изменение статуса на Deleted
         tenant.Status = TenantStatus.Deleted;
         tenant.UpdatedAt = DateTime.UtcNow;
-        var events = new List<IDomainEvent>
-        {
-            new TenantStatusChangedEvent(tenant.Id, (TenantStatusContract)(int)oldStatus, TenantStatusContract.Deleted, tenant.UpdatedAt),
-            new TenantDeletedEvent(tenant.Id, tenant.UpdatedAt)
-        };
 
-        // Сохранение
-        await _repository.UpdateAsync(tenant, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Публикация событий
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционных событий
+        var statusChangedEvent = new TenantStatusChangedEvent(
+            tenant.TenantInt,
+            (TenantStatusContract)(int)oldStatus,
+            TenantStatusContract.Deleted,
+            tenant.UpdatedAt);
+
+        var deletedEvent = new TenantDeletedEvent(
+            tenant.TenantInt,
+            tenant.UpdatedAt);
+
+        await _eventBus.PublishAsync(statusChangedEvent, cancellationToken);
+        await _eventBus.PublishAsync(deletedEvent, cancellationToken);
 
         return Result.Success();
     }

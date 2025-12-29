@@ -5,8 +5,9 @@ namespace Identity.Domain.Entities;
 
 /// <summary>
 /// Сессия пользователя для отслеживания активных сеансов
+/// Существует в tenant-специфичной БД со схемой Identity
 /// </summary>
-public class Session : BaseEntity, IAggregateRoot
+public class Session : BaseEntity
 {
     /// <summary>
     /// Идентификатор пользователя (из модуля Users)
@@ -14,9 +15,9 @@ public class Session : BaseEntity, IAggregateRoot
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Идентификатор тенанта
+    /// Tenant ID (числовой идентификатор тенанта)
     /// </summary>
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Идентификатор токена обновления, связанного с сессией

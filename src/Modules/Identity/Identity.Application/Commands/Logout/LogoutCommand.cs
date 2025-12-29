@@ -1,12 +1,13 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
 using Identity.Application.Abstractions;
+using Identity.Contracts.Events;
 using Identity.Domain.Enums;
 using Identity.Domain.Errors;
-using Contracts.Identity.Events;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Application.Commands.Logout;
 
@@ -15,6 +16,7 @@ namespace Identity.Application.Commands.Logout;
 /// </summary>
 public sealed record LogoutCommand(
     Guid SessionId,
+    int TenantId,
     string? Reason = null) : ICommand;
 
 /// <summary>
@@ -22,26 +24,24 @@ public sealed record LogoutCommand(
 /// </summary>
 internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 {
-    private readonly ISessionRepository _sessionRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IIdentityDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public LogoutCommandHandler(
-        ISessionRepository sessionRepository,
-        IRefreshTokenRepository refreshTokenRepository,
+        IIdentityDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _sessionRepository = sessionRepository;
-        _refreshTokenRepository = refreshTokenRepository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(LogoutCommand command, CancellationToken cancellationToken)
     {
-        var session = await _sessionRepository.GetByIdAsync(command.SessionId, cancellationToken);
+        var session = await _dbContext.Sessions
+            .FirstOrDefaultAsync(s => s.Id == command.SessionId && s.TenantId == command.TenantId, cancellationToken);
         if (session == null)
         {
             return Result.Failure(IdentityErrors.SessionNotFound(command.SessionId));
@@ -57,32 +57,29 @@ internal sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
         session.ClosedAt = DateTime.UtcNow;
         session.CloseReason = command.Reason;
 
-        // Отзываем связанный refresh token, если есть
+        // Отзываем связанный refresh token, если есть (с проверкой TenantId)
         if (session.RefreshTokenId.HasValue)
         {
-            var refreshToken = await _refreshTokenRepository.GetByIdAsync(session.RefreshTokenId.Value, cancellationToken);
+            var refreshToken = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Id == session.RefreshTokenId.Value && rt.TenantId == command.TenantId, cancellationToken);
             if (refreshToken != null && refreshToken.IsValid)
             {
                 refreshToken.RevokedAt = DateTime.UtcNow;
                 refreshToken.RevocationReason = "User logged out";
-                await _refreshTokenRepository.UpdateAsync(refreshToken, cancellationToken);
             }
         }
 
-        var events = new List<IDomainEvent>
-        {
-            new UserLoggedOutEvent(
-                session.UserId,
-                session.TenantId,
-                session.Id,
-                DateTime.UtcNow,
-                command.Reason)
-        };
-
-        await _sessionRepository.UpdateAsync(session, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new UserLoggedOutEvent(
+            session.UserId,
+            session.TenantId,
+            session.Id,
+            DateTime.UtcNow,
+            command.Reason);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }
@@ -97,6 +94,9 @@ internal sealed class LogoutCommandValidator : AbstractValidator<LogoutCommand>
     {
         RuleFor(x => x.SessionId)
             .NotEmpty().WithMessage("Session ID is required.");
+
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID must be greater than 0.");
     }
 }
 

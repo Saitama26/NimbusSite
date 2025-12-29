@@ -1,9 +1,9 @@
-CREATE VIEW vw_Projects AS
+CREATE OR REPLACE VIEW vw_Projects AS
 SELECT 
     Id,
     TenantId,
     Name,
     Status,
     UpdatedAt
-FROM NimbusSite_Projects.Projects;
+FROM Projects;
 

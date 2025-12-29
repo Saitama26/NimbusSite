@@ -1,13 +1,14 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
 using AccessPermissions.Application.Abstractions;
+using AccessPermissions.Contracts.Enums;
+using AccessPermissions.Contracts.Events;
 using AccessPermissions.Domain.Enums;
 using AccessPermissions.Domain.Errors;
-using Contracts.AccessPermissions.Events;
-using Contracts.AccessPermissions;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessPermissions.Application.Commands.UpdateAccessPermission;
 
@@ -16,6 +17,7 @@ namespace AccessPermissions.Application.Commands.UpdateAccessPermission;
 /// </summary>
 public sealed record UpdateAccessPermissionCommand(
     Guid PermissionId,
+    int TenantId,
     PermissionType? Type = null,
     DateTime? ExpiresAt = null,
     string? Note = null) : ICommand;
@@ -25,23 +27,24 @@ public sealed record UpdateAccessPermissionCommand(
 /// </summary>
 internal sealed class UpdateAccessPermissionCommandHandler : ICommandHandler<UpdateAccessPermissionCommand>
 {
-    private readonly IAccessPermissionRepository _repository;
+    private readonly IAccessPermissionsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public UpdateAccessPermissionCommandHandler(
-        IAccessPermissionRepository repository,
+        IAccessPermissionsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(UpdateAccessPermissionCommand command, CancellationToken cancellationToken)
     {
-        var permission = await _repository.GetByIdAsync(command.PermissionId, cancellationToken);
+        var permission = await _dbContext.AccessPermissions
+            .FirstOrDefaultAsync(p => p.Id == command.PermissionId && p.TenantId == command.TenantId, cancellationToken);
         if (permission == null)
         {
             return Result.Failure(AccessPermissionErrors.NotFound(command.PermissionId));
@@ -53,10 +56,13 @@ internal sealed class UpdateAccessPermissionCommandHandler : ICommandHandler<Upd
             return Result.Failure(AccessPermissionErrors.PermissionExpired);
         }
 
+        var hasChanges = false;
+
         // Обновление полей
-        if (command.Type.HasValue)
+        if (command.Type.HasValue && permission.Type != command.Type.Value)
         {
             permission.Type = command.Type.Value;
+            hasChanges = true;
         }
 
         if (command.ExpiresAt.HasValue)
@@ -65,32 +71,37 @@ internal sealed class UpdateAccessPermissionCommandHandler : ICommandHandler<Upd
             {
                 return Result.Failure(AccessPermissionErrors.PermissionExpired);
             }
-            permission.ExpiresAt = command.ExpiresAt.Value;
+            if (permission.ExpiresAt != command.ExpiresAt.Value)
+            {
+                permission.ExpiresAt = command.ExpiresAt.Value;
+                hasChanges = true;
+            }
         }
 
-        if (command.Note != null)
+        if (command.Note != null && permission.Note != command.Note.Trim())
         {
             permission.Note = command.Note.Trim();
+            hasChanges = true;
         }
 
-        permission.UpdatedAt = DateTime.UtcNow;
-
-        var events = new List<IDomainEvent>
+        if (hasChanges)
         {
-            new AccessPermissionUpdatedEvent(
+            permission.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Публикация интеграционного события
+            var @event = new AccessPermissionUpdatedEvent(
                 permission.Id,
                 permission.TenantId,
                 permission.UserId,
                 (PermissionTypeContract)(int)permission.Type,
                 permission.ExpiresAt,
                 permission.Note,
-                permission.UpdatedAt ?? DateTime.UtcNow)
-        };
+                permission.UpdatedAt);
 
-        await _repository.UpdateAsync(permission, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        await _eventBus.PublishAsync(events, cancellationToken);
+            await _eventBus.PublishAsync(@event, cancellationToken);
+        }
 
         return Result.Success();
     }

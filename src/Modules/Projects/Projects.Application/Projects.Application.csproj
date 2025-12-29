@@ -10,16 +10,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Projects.Domain\Projects.Domain.csproj" />
+    <ProjectReference Include="..\Projects.Contracts\Projects.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
-    <ProjectReference Include="..\..\Contracts\Contracts.csproj" />
-    <ProjectReference Include="..\..\Tenants\Tenants.Application\Tenants.Application.csproj" />
-    <ProjectReference Include="..\..\Users\Users.Application\Users.Application.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Tenants\Tenants.Contracts\Tenants.Contracts.csproj" />
+    <ProjectReference Include="..\..\Users\Users.Contracts\Users.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
-    <PackageReference Include="FluentValidation" Version="11.9.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.9.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

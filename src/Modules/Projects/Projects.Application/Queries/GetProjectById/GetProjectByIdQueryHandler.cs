@@ -1,35 +1,43 @@
-using AutoMapper;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions;
-using Projects.Application.DTOs;
+using Projects.Application.Queries.GetProjectById;
 using Projects.Domain.Errors;
 
 namespace Projects.Application.Queries.GetProjectById;
 
 /// <summary>
-/// Обработчик получения проекта по ID.
+/// Обработчик получения проекта по ID
 /// </summary>
 internal sealed class GetProjectByIdQueryHandler : IQueryHandler<GetProjectByIdQuery, ProjectDto>
 {
-    private readonly IProjectRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly IProjectsDbContext _dbContext;
 
-    public GetProjectByIdQueryHandler(IProjectRepository repository, IMapper mapper)
+    public GetProjectByIdQueryHandler(IProjectsDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
     public async Task<Result<ProjectDto>> Handle(GetProjectByIdQuery query, CancellationToken cancellationToken)
     {
-        var project = await _repository.GetByIdAsync(query.ProjectId, cancellationToken);
+        var project = await _dbContext.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == query.ProjectId && p.TenantId == query.TenantId && p.Status != Projects.Domain.Enums.ProjectStatus.Deleted, cancellationToken);
         if (project == null)
         {
             return Result<ProjectDto>.Failure(ProjectErrors.NotFound(query.ProjectId));
         }
 
-        var dto = _mapper.Map<ProjectDto>(project);
+        var dto = new ProjectDto(
+            project.Id,
+            project.TenantId,
+            project.Name,
+            project.Description,
+            project.Status,
+            project.CreatedAt,
+            project.UpdatedAt);
+
         return Result<ProjectDto>.Success(dto);
     }
 }

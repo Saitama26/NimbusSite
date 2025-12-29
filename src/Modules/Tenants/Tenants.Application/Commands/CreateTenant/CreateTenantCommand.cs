@@ -1,79 +1,135 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Tenants.Application.Abstractions;
+using Tenants.Contracts.Events;
+using Tenants.Contracts.Enums;
 using Tenants.Domain.Entities;
 using Tenants.Domain.Enums;
-using Contracts.Tenants;
-using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.CreateTenant;
 
 /// <summary>
 /// Команда создания нового тенанта
-/// Тенант создается автоматически при создании первого проекта пользователем
+/// Тенант - это независимая сущность, связь пользователя с тенантом создается отдельно
+/// ConnectionString генерируется автоматически на основе TenantInt после сохранения
 /// </summary>
 public sealed record CreateTenantCommand(
     string Name,
-    Guid CreatedByUserId,
-    string? ConnectionString = null,
     string? Description = null) : ICommand<CreateTenantResponse>;
 
-
+/// <summary>
+/// Ответ при создании тенанта
+/// </summary>
+public sealed record CreateTenantResponse(
+    int TenantInt,
+    string ConnectionString);
 
 /// <summary>
 /// Обработчик команды создания тенанта
 /// </summary>
 internal sealed class CreateTenantCommandHandler : ICommandHandler<CreateTenantCommand, CreateTenantResponse>
 {
-    private readonly ITenantRepository _repository;
+    private readonly ITenantsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<CreateTenantCommandHandler> _logger;
 
     public CreateTenantCommandHandler(
-        ITenantRepository repository,
+        ITenantsDbContext dbContext,
         IUnitOfWork unitOfWork,
-        IEventBus eventBus)
+        IEventBus eventBus,
+        IServiceProvider serviceProvider,
+        ILogger<CreateTenantCommandHandler> logger)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     public async Task<Result<CreateTenantResponse>> Handle(CreateTenantCommand command, CancellationToken cancellationToken)
     {
-        // Создание тенанта (без поддомена, так как он не используется)
+        // Проверяем, что тенант с таким именем не существует
+        var exists = await _dbContext.Tenants
+            .AnyAsync(t => t.Name == command.Name.Trim(), cancellationToken);
+
+        if (exists)
+        {
+            return Result<CreateTenantResponse>.Failure(
+                Error.Conflict("Tenant.AlreadyExists", $"Tenant with name '{command.Name}' already exists"));
+        }
+
+        // Создание тенанта
         var tenant = new Tenant
         {
             Name = command.Name.Trim(),
-            Subdomain = string.Empty, // Не используется, но оставляем для совместимости с БД
-            ConnectionString = command.ConnectionString,
+            ConnectionString = string.Empty, // Будет сгенерирован автоматически после сохранения
             Description = command.Description?.Trim(),
-            AdminEmail = null, // Админ определяется через UserTenant
             Status = TenantStatus.Active,
+            CreatedAt = DateTime.UtcNow
         };
 
-        var events = new List<IDomainEvent>
-        {
-            new TenantCreatedEvent(
-                tenant.Id,
-                tenant.Name,
-                (TenantStatusContract)(int)tenant.Status,
-                command.CreatedByUserId,
-                tenant.Description,
-                tenant.ConnectionString,
-                tenant.CreatedAt)
-        };
-
-        // Сохранение
-        await _repository.AddAsync(tenant, cancellationToken);
+        _dbContext.Tenants.Add(tenant);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Публикация события в очередь
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Генерируем connection string автоматически на основе TenantInt
+        // Имя БД всегда в формате {dbName}_{TenantInt} (по умолчанию Tenant_{TenantInt})
+        // Используем connection string центральной БД как шаблон
+        var tenantsConnectionString = Environment.GetEnvironmentVariable("TENANTS_DB_CONNECTION_STRING")
+            ?? throw new InvalidOperationException("TENANTS_DB_CONNECTION_STRING is not configured");
 
-        return Result<CreateTenantResponse>.Success(new CreateTenantResponse(tenant.Id));
+        // Создаем connection string с именем БД в формате Tenant_{TenantInt}
+        // (уже соответствует формату {dbName}_{id})
+        var tenantConnectionString = tenantsConnectionString
+            .Replace("Database=NimbusSite_Tenants", $"Database=Tenant_{tenant.TenantInt}")
+            .Replace("database=NimbusSite_Tenants", $"database=Tenant_{tenant.TenantInt}");
+
+        tenant.ConnectionString = tenantConnectionString;
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Создаем событие для обработки
+        var @event = new TenantCreatedEvent(
+            tenant.TenantInt,
+            tenant.Name,
+            (TenantStatusContract)(int)tenant.Status,
+            tenant.Description,
+            tenant.ConnectionString,
+            tenant.CreatedAt);
+
+        // Инициализируем БД тенанта СИНХРОННО сразу после создания
+        // Это гарантирует, что БД будет создана сразу, без ожидания Kafka
+        // Используем обработчик события для единообразия логики
+        try
+        {
+            // Вызываем обработчик события локально для немедленной инициализации БД
+            using var scope = _serviceProvider.CreateScope();
+            var eventHandler = scope.ServiceProvider.GetRequiredService<IEventHandler<TenantCreatedEvent>>();
+            await eventHandler.Handle(@event, cancellationToken);
+            _logger.LogInformation("Tenant database initialized synchronously for tenant {TenantInt}", tenant.TenantInt);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CRITICAL: Failed to initialize tenant database synchronously for tenant {TenantInt}. " +
+                                "Database tables were NOT created! This is a critical error.", tenant.TenantInt);
+            // Пробрасываем исключение - создание тенанта без БД не имеет смысла
+            // Это критическая ошибка, которая должна быть видна пользователю
+            return Result<CreateTenantResponse>.Failure(
+                Error.Failure("Tenant.DatabaseInitializationFailed", 
+                    $"Failed to initialize database for tenant. Error: {ex.Message}"));
+        }
+
+        // Публикация интеграционного события в Kafka для других модулей
+        await _eventBus.PublishAsync(@event, cancellationToken);
+
+        return Result<CreateTenantResponse>.Success(
+            new CreateTenantResponse(tenant.TenantInt, tenant.ConnectionString));
     }
 }
 

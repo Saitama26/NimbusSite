@@ -8,7 +8,7 @@ public interface IJwtTokenGenerator
     /// <summary>
     /// Сгенерировать access token
     /// </summary>
-    string GenerateAccessToken(Guid userId, Guid tenantId, IEnumerable<string>? roles = null);
+    string GenerateAccessToken(Guid userId, int tenantId, IEnumerable<string>? roles = null);
 
     /// <summary>
     /// Сгенерировать refresh token

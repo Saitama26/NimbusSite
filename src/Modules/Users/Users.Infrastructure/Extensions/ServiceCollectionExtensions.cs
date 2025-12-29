@@ -1,37 +1,40 @@
+using Common.Application.Abstractions;
+using Common.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Users.Application.Abstractions;
-using Users.Infrastructure.Repositories;
-using Users.Infrastructure.Sharding;
 
 namespace Users.Infrastructure.Extensions;
 
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Регистрация инфраструктуры Users: DbContext, репозиторий, UoW, ShardResolver.
+    /// Регистрация инфраструктуры Users: DbContext, UoW
+    /// Connection string определяется динамически по TenantId через TenantConnectionCache
     /// </summary>
     public static IServiceCollection AddUsersInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Try environment variable first, then configuration
-        var connectionString = Environment.GetEnvironmentVariable("USERS_DB_CONNECTION_STRING")
-            ?? configuration.GetConnectionString("DefaultConnection")
-            ?? configuration["ConnectionStrings:DefaultConnection"]
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' or 'USERS_DB_CONNECTION_STRING' is not configured.");
+        // Регистрируем Tenancy сервисы (TenantConnectionCache, UserTenantService)
+        services.AddTenancy(configuration);
 
-        services.AddDbContext<UsersDbContext>(options =>
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+        // Регистрируем фабрику DbContext
+        services.AddScoped<IDbContextFactory<UsersDbContext>, TenantUsersDbContextFactory>();
 
-        services.AddScoped<IUserRepository, UserRepository>();
+        // Регистрируем DbContext через фабрику
+        services.AddScoped<UsersDbContext>(sp =>
+        {
+            var factory = sp.GetRequiredService<IDbContextFactory<UsersDbContext>>();
+            return factory.CreateDbContext();
+        });
+
+        // Регистрируем IUsersDbContext
+        services.AddScoped<IUsersDbContext>(sp => sp.GetRequiredService<UsersDbContext>());
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
-            sp.GetRequiredService<UsersDbContext>(),
-            connectionString));
 
         return services;
     }
 }
-

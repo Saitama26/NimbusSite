@@ -1,10 +1,11 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions;
+using Projects.Contracts.Events;
 using Projects.Domain.Errors;
-using Contracts.Projects.Events;
 
 namespace Projects.Application.Commands.UpdateProject;
 
@@ -12,10 +13,12 @@ namespace Projects.Application.Commands.UpdateProject;
 /// Команда обновления проекта.
 /// </summary>
 /// <param name="ProjectId">Идентификатор проекта</param>
+/// <param name="TenantId">Идентификатор тенанта</param>
 /// <param name="Name">Новое название проекта (необязательное, обновляется только если указано)</param>
 /// <param name="Description">Новое описание проекта (необязательное, может быть пустым для очистки)</param>
 public sealed record UpdateProjectCommand(
     Guid ProjectId,
+    int TenantId,
     string? Name = null,
     string? Description = null) : ICommand;
 
@@ -24,26 +27,32 @@ public sealed record UpdateProjectCommand(
 /// </summary>
 internal sealed class UpdateProjectCommandHandler : ICommandHandler<UpdateProjectCommand>
 {
-    private readonly IProjectRepository _repository;
+    private readonly IProjectsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public UpdateProjectCommandHandler(
-        IProjectRepository repository,
+        IProjectsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(UpdateProjectCommand command, CancellationToken cancellationToken)
     {
-        var project = await _repository.GetByIdAsync(command.ProjectId, cancellationToken);
+        var project = await _dbContext.Projects
+            .FirstOrDefaultAsync(p => p.Id == command.ProjectId && p.TenantId == command.TenantId, cancellationToken);
         if (project == null)
         {
             return Result.Failure(ProjectErrors.NotFound(command.ProjectId));
+        }
+
+        if (project.Status == Projects.Domain.Enums.ProjectStatus.Deleted)
+        {
+            return Result.Failure(ProjectErrors.AlreadyDeleted);
         }
 
         var hasChanges = false;
@@ -63,19 +72,18 @@ internal sealed class UpdateProjectCommandHandler : ICommandHandler<UpdateProjec
         if (hasChanges)
         {
             project.UpdatedAt = DateTime.UtcNow;
-            var events = new List<IDomainEvent>
-            {
-                new ProjectUpdatedEvent(
-                    project.Id,
-                    project.TenantId,
-                    project.Name,
-                    project.Description,
-                    project.UpdatedAt)
-            };
 
-            await _repository.UpdateAsync(project, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _eventBus.PublishAsync(events, cancellationToken);
+
+            // Публикация интеграционного события
+            var @event = new ProjectUpdatedEvent(
+                project.Id,
+                project.TenantId,
+                project.Name,
+                project.Description,
+                project.UpdatedAt);
+
+            await _eventBus.PublishAsync(@event, cancellationToken);
         }
 
         return Result.Success();

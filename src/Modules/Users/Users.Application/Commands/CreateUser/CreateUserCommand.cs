@@ -1,23 +1,24 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Users.Application.Abstractions;
-using Users.Application.Commands.CreateUser;
+using Users.Contracts.Events;
+using Users.Contracts.Enums;
 using Users.Domain.Entities;
 using Users.Domain.Enums;
-using Contracts.Users;
 using Users.Domain.Errors;
-using Contracts.Users.Events;
 
 namespace Users.Application.Commands.CreateUser;
 
 /// <summary>
 /// Команда создания нового пользователя
-/// Пользователь создается без тенанта, тенант добавляется позже через UserTenant
+/// Пользователь создается в tenant-специфичной БД со схемой Users
 /// </summary>
 public sealed record CreateUserCommand(
+    int TenantId,
     string Email,
     string Name,
     string? Phone = null,
@@ -33,16 +34,16 @@ public sealed record CreateUserResponse(Guid UserId);
 /// </summary>
 internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserCommand, CreateUserResponse>
 {
-    private readonly IUserRepository _repository;
+    private readonly IUsersDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public CreateUserCommandHandler(
-        IUserRepository repository,
+        IUsersDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
@@ -61,8 +62,9 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
             return Result<CreateUserResponse>.Failure(UserErrors.InvalidEmailFormat);
         }
 
-        // Проверка уникальности email (глобально)
-        var exists = await _repository.ExistsByEmailAsync(emailLower, cancellationToken);
+        // Проверка уникальности email в рамках тенанта
+        var exists = await _dbContext.Users
+            .AnyAsync(u => u.TenantId == command.TenantId && u.Email == emailLower, cancellationToken);
         if (exists)
         {
             return Result<CreateUserResponse>.Failure(UserErrors.EmailAlreadyExists(emailLower));
@@ -75,9 +77,10 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
             return Result<CreateUserResponse>.Failure(UserErrors.NameEmpty);
         }
 
-        // Создание пользователя (без тенанта)
+        // Создание пользователя
         var user = new User
         {
+            TenantId = command.TenantId,
             Email = emailLower,
             Name = name,
             Status = UserStatus.Active,
@@ -85,24 +88,21 @@ internal sealed class CreateUserCommandHandler : ICommandHandler<CreateUserComma
             Bio = command.Bio?.Trim(),
         };
 
-        var events = new List<IDomainEvent>
-        {
-            new UserCreatedEvent(
-                user.Id,
-                user.Email,
-                user.Name,
-                (UserStatusContract)(int)user.Status,
-                user.Phone,
-                user.Bio,
-                user.CreatedAt)
-        };
-
-        // Сохранение
-        await _repository.AddAsync(user, cancellationToken);
+        _dbContext.Users.Add(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Публикация события в очередь
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new UserCreatedEvent(
+            user.Id,
+            user.TenantId,
+            user.Email,
+            user.Name,
+            (UserStatusContract)(int)user.Status,
+            user.Phone,
+            user.Bio,
+            user.CreatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result<CreateUserResponse>.Success(new CreateUserResponse(user.Id));
     }
@@ -115,6 +115,9 @@ internal sealed class CreateUserCommandValidator : AbstractValidator<CreateUserC
 {
     public CreateUserCommandValidator()
     {
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID is required.");
+
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.")

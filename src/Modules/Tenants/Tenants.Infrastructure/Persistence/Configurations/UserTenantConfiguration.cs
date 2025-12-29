@@ -8,6 +8,7 @@ internal sealed class UserTenantConfiguration : IEntityTypeConfiguration<UserTen
 {
     public void Configure(EntityTypeBuilder<UserTenant> builder)
     {
+        // Таблица UserTenants в центральной БД NimbusSite_Tenants
         builder.ToTable("UserTenants");
 
         builder.HasKey(x => x.Id);
@@ -18,7 +19,7 @@ internal sealed class UserTenantConfiguration : IEntityTypeConfiguration<UserTen
         builder.Property(x => x.UserId)
             .IsRequired();
 
-        builder.Property(x => x.TenantId)
+        builder.Property(x => x.TenantInt)
             .IsRequired();
 
         builder.Property(x => x.IsOwner)
@@ -26,7 +27,8 @@ internal sealed class UserTenantConfiguration : IEntityTypeConfiguration<UserTen
             .HasDefaultValue(false);
 
         builder.Property(x => x.Role)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion<int>(); // Сохраняем как int в БД
 
         builder.Property(x => x.JoinedAt)
             .IsRequired();
@@ -35,14 +37,20 @@ internal sealed class UserTenantConfiguration : IEntityTypeConfiguration<UserTen
             .IsRequired();
 
         // Уникальный индекс: один пользователь может быть в одном тенанте только один раз
-        builder.HasIndex(x => new { x.UserId, x.TenantId })
+        builder.HasIndex(x => new { x.UserId, x.TenantInt })
             .IsUnique();
 
         // Индекс для быстрого поиска тенантов пользователя
         builder.HasIndex(x => x.UserId);
 
         // Индекс для быстрого поиска пользователей тенанта
-        builder.HasIndex(x => x.TenantId);
+        builder.HasIndex(x => x.TenantInt);
+
+        // Foreign key к Tenant
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(x => x.TenantInt)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 

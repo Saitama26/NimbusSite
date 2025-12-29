@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -18,7 +19,7 @@ public sealed class KafkaEventSubscriber : IEventSubscriber, IHostedService
 {
     private readonly IConsumer<string, string> _consumer;
     private readonly ILogger<KafkaEventSubscriber> _logger;
-    private readonly ConcurrentDictionary<string, Func<IDomainEvent, CancellationToken, Task>> _handlers = new();
+    private readonly ConcurrentDictionary<string, Func<IIntegrationEvent, CancellationToken, Task>> _handlers = new();
     private readonly string _groupId;
     private readonly string[] _topics;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -64,7 +65,7 @@ public sealed class KafkaEventSubscriber : IEventSubscriber, IHostedService
     public async Task SubscribeAsync<TEvent>(
         Func<TEvent, CancellationToken, Task> handler,
         CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent
+        where TEvent : IIntegrationEvent
     {
         var eventTypeName = typeof(TEvent).FullName ?? typeof(TEvent).Name;
         
@@ -84,7 +85,7 @@ public sealed class KafkaEventSubscriber : IEventSubscriber, IHostedService
     }
 
     public async Task UnsubscribeAsync<TEvent>(CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent
+        where TEvent : IIntegrationEvent
     {
         var eventTypeName = typeof(TEvent).FullName ?? typeof(TEvent).Name;
         
@@ -268,28 +269,161 @@ public sealed class KafkaEventSubscriber : IEventSubscriber, IHostedService
                 return;
             }
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Processing event {EventType} with correlation ID {CorrelationId}",
                 envelope.EventType,
                 envelope.CorrelationId);
 
             // Находим handler для этого типа события
-            var handlerKey = _handlers.Keys.FirstOrDefault(k => envelope.EventType.Contains(k.Split('.').Last()));
+            // Сначала пробуем точное совпадение по полному имени типа
+            Func<IIntegrationEvent, CancellationToken, Task>? handler = null;
+            string? handlerKey = null;
             
-            if (handlerKey != null && _handlers.TryGetValue(handlerKey, out var handler))
+            _logger.LogInformation("Looking for handler for event type '{EventType}'. Total registered handlers: {HandlerCount}", 
+                envelope.EventType, _handlers.Count);
+            _logger.LogInformation("Registered handler keys: {Keys}", string.Join(" | ", _handlers.Keys));
+            
+            var tryGetValueResult = _handlers.TryGetValue(envelope.EventType, out handler);
+            _logger.LogInformation("TryGetValue result for '{EventType}': {Result}, Handler is null: {IsNull}", 
+                envelope.EventType, tryGetValueResult, handler == null);
+            
+            if (tryGetValueResult)
             {
-                // Десериализуем событие
-                var eventType = Type.GetType(envelope.EventType);
-                if (eventType != null && typeof(IDomainEvent).IsAssignableFrom(eventType))
+                handlerKey = envelope.EventType;
+                _logger.LogInformation("Found exact handler match for event type {EventType}. HandlerKey: {HandlerKey}, Handler: {Handler}", 
+                    envelope.EventType, handlerKey, handler != null ? "not null" : "null");
+            }
+            else
+            {
+                _logger.LogInformation("Exact match not found for '{EventType}', trying short name match", envelope.EventType);
+                // Если точное совпадение не найдено, пробуем найти по последней части имени типа
+                var eventTypeShortName = envelope.EventType.Split('.').Last();
+                handlerKey = _handlers.Keys.FirstOrDefault(k => 
                 {
-                    var domainEvent = JsonSerializer.Deserialize(envelope.Payload, eventType) as IDomainEvent;
-                    if (domainEvent != null)
+                    var keyShortName = k.Split('.').Last();
+                    return keyShortName == eventTypeShortName;
+                });
+                
+                if (handlerKey != null)
+                {
+                    _handlers.TryGetValue(handlerKey, out handler);
+                    _logger.LogInformation("Found handler by short name match: {HandlerKey} for event type {EventType}. Handler: {Handler}", 
+                        handlerKey, envelope.EventType, handler != null ? "not null" : "null");
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "No handler found for event type {EventType}. Registered handlers: {Handlers}",
+                        envelope.EventType,
+                        string.Join(", ", _handlers.Keys));
+                }
+            }
+            
+            _logger.LogInformation("Before handler execution check: handlerKey={HandlerKey}, handler={Handler}", 
+                handlerKey ?? "null", handler != null ? "not null" : "null");
+            
+            if (handlerKey != null && handler != null)
+            {
+                _logger.LogInformation("Handler found for event {EventType}, attempting to deserialize", envelope.EventType);
+                
+                // Десериализуем событие
+                // Type.GetType() не работает для типов из других сборок без assembly-qualified name
+                // Поэтому ищем тип по всем загруженным сборкам
+                var eventType = Type.GetType(envelope.EventType);
+                if (eventType == null)
+                {
+                    _logger.LogInformation("Type.GetType() returned null for {EventType}, searching in loaded assemblies", envelope.EventType);
+                    // Ищем тип по всем загруженным сборкам
+                    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                    _logger.LogInformation("Searching in {AssemblyCount} loaded assemblies", assemblies.Length);
+                    
+                    eventType = assemblies
+                        .SelectMany(assembly =>
+                        {
+                            try
+                            {
+                                return assembly.GetTypes();
+                            }
+                            catch (ReflectionTypeLoadException ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to load types from assembly {AssemblyName}", assembly.FullName);
+                                return Array.Empty<Type>();
+                            }
+                        })
+                        .FirstOrDefault(t => t.FullName == envelope.EventType);
+                    
+                    if (eventType != null)
                     {
-                        await handler(domainEvent, cancellationToken);
-                        _logger.LogDebug("Successfully processed event {EventType}", envelope.EventType);
-                        return;
+                        _logger.LogInformation("Found event type {EventType} in assembly {AssemblyName}", envelope.EventType, eventType.Assembly.GetName().Name);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Event type {EventType} not found in any loaded assembly. Available types with similar names: {SimilarTypes}",
+                            envelope.EventType,
+                            string.Join(", ", assemblies
+                                .SelectMany(a => {
+                                    try { return a.GetTypes(); }
+                                    catch { return Array.Empty<Type>(); }
+                                })
+                                .Where(t => t.FullName != null && t.FullName.Contains(envelope.EventType.Split('.').Last()))
+                                .Select(t => t.FullName)
+                                .Take(5)));
                     }
                 }
+                else
+                {
+                    _logger.LogInformation("Type.GetType() found event type {EventType}", envelope.EventType);
+                }
+                
+                if (eventType != null && typeof(IIntegrationEvent).IsAssignableFrom(eventType))
+                {
+                    _logger.LogInformation("Deserializing event {EventType} from payload (length: {PayloadLength})", envelope.EventType, envelope.Payload?.Length ?? 0);
+                    try
+                    {
+                        // Настройки для десериализации событий с параметризованными конструкторами
+                        // System.Text.Json требует, чтобы имена параметров конструктора совпадали с именами свойств в JSON
+                        var jsonOptions = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
+                        
+                        var integrationEvent = JsonSerializer.Deserialize(envelope.Payload, eventType, jsonOptions) as IIntegrationEvent;
+                        if (integrationEvent != null)
+                        {
+                            _logger.LogInformation("Calling handler for event {EventType}", envelope.EventType);
+                            await handler(integrationEvent, cancellationToken);
+                            _logger.LogInformation("Successfully processed event {EventType}", envelope.EventType);
+                            return;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to deserialize event {EventType} from payload (deserialized object is null)", envelope.EventType);
+                        }
+                    }
+                    catch (Exception deserializeEx)
+                    {
+                        _logger.LogError(deserializeEx, "Exception during deserialization of event {EventType}. Payload preview: {PayloadPreview}",
+                            envelope.EventType,
+                            envelope.Payload?.Length > 200 ? envelope.Payload.Substring(0, 200) + "..." : envelope.Payload);
+                    }
+                }
+                else
+                {
+                    if (eventType == null)
+                    {
+                        _logger.LogWarning("Event type {EventType} not found", envelope.EventType);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Event type {EventType} does not implement IIntegrationEvent", envelope.EventType);
+                    }
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Handler key or handler is null. HandlerKey: {HandlerKey}, Handler: {Handler}",
+                    handlerKey ?? "null",
+                    handler != null ? "not null" : "null");
             }
 
             _logger.LogWarning("No handler found for event type {EventType}", envelope.EventType);

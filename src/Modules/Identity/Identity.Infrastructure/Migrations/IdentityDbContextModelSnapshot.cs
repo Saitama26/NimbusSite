@@ -45,8 +45,8 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -108,8 +108,8 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserAgent")
                         .HasMaxLength(500)
@@ -170,9 +170,8 @@ namespace Identity.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<Guid?>("TenantId")
-                        .IsRequired()
-                        .HasColumnType("char(36)");
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -191,32 +190,6 @@ namespace Identity.Infrastructure.Migrations
                         .HasDatabaseName("IX_UserCredentials_TenantId_Email");
 
                     b.ToTable("UserCredentials", (string)null);
-                });
-
-            modelBuilder.Entity("Identity.Infrastructure.Persistence.Sharding.ShardMapEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ConnectionString")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_ShardMapEntries_TenantId");
-
-                    b.ToTable("ShardMapEntries", (string)null);
                 });
 
             modelBuilder.Entity("Identity.Infrastructure.Views.TenantsViews.TenantView", b =>
@@ -266,6 +239,10 @@ namespace Identity.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int")
                         .HasColumnName("Status");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int")
+                        .HasColumnName("TenantId");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)")

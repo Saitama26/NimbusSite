@@ -1,31 +1,37 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Projects.Application.Abstractions;
-using Projects.Application.DTOs;
+using Projects.Application.Queries.GetProjects;
 
 namespace Projects.Application.Queries.GetProjects;
 
 /// <summary>
-/// Обработчик получения списка проектов.
+/// Обработчик получения списка проектов
 /// </summary>
-internal sealed class GetProjectsQueryHandler : IQueryHandler<GetProjectsQuery, IQueryable<ProjectListItemDto>>
+internal sealed class GetProjectsQueryHandler : IQueryHandler<GetProjectsQuery, IEnumerable<ProjectListItemDto>>
 {
-    private readonly IProjectRepository _repository;
-    private readonly IMapper _mapper;
+    private readonly IProjectsDbContext _dbContext;
 
-    public GetProjectsQueryHandler(IProjectRepository repository, IMapper mapper)
+    public GetProjectsQueryHandler(IProjectsDbContext dbContext)
     {
-        _repository = repository;
-        _mapper = mapper;
+        _dbContext = dbContext;
     }
 
-    public async Task<Result<IQueryable<ProjectListItemDto>>> Handle(GetProjectsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<ProjectListItemDto>>> Handle(GetProjectsQuery query, CancellationToken cancellationToken)
     {
-        var projects = await _repository.GetAllAsync(cancellationToken);
-        var dtoQueryable = projects.ProjectTo<ProjectListItemDto>(_mapper.ConfigurationProvider);
-        return Result<IQueryable<ProjectListItemDto>>.Success(dtoQueryable);
+        var projects = await _dbContext.Projects
+            .AsNoTracking()
+            .Where(p => p.TenantId == query.TenantId && p.Status != Projects.Domain.Enums.ProjectStatus.Deleted)
+            .Select(p => new ProjectListItemDto(
+                p.Id,
+                p.TenantId,
+                p.Name,
+                p.Status,
+                p.UpdatedAt))
+            .ToListAsync(cancellationToken);
+
+        return Result<IEnumerable<ProjectListItemDto>>.Success(projects);
     }
 }
 

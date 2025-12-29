@@ -8,35 +8,33 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 {
     public void Configure(EntityTypeBuilder<Tenant> builder)
     {
+        // Таблица Tenants в центральной БД NimbusSite_Tenants
         builder.ToTable("Tenants");
 
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => x.TenantInt);
 
-        builder.Property(x => x.Id)
-            .ValueGeneratedNever();
+        // TenantInt - автоинкремент
+        builder.Property(x => x.TenantInt)
+            .ValueGeneratedOnAdd();
 
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(x => x.Subdomain)
-            .IsRequired()
-            .HasMaxLength(63);
-
-        builder.HasIndex(x => x.Subdomain)
+        // Индекс для быстрого поиска по имени
+        builder.HasIndex(x => x.Name)
             .IsUnique();
 
         builder.Property(x => x.ConnectionString)
+            .IsRequired()
             .HasMaxLength(500);
 
         builder.Property(x => x.Description)
             .HasMaxLength(1000);
 
-        builder.Property(x => x.AdminEmail)
-            .HasMaxLength(320); // RFC max length for email
-
         builder.Property(x => x.Status)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion<int>(); // Сохраняем как int в БД
 
         builder.Property(x => x.CreatedAt)
             .IsRequired();

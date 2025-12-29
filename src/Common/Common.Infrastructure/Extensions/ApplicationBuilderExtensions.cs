@@ -31,4 +31,23 @@ public static class ApplicationBuilderExtensions
     {
         return app.UseMiddleware<TenantContextMiddleware>();
     }
+
+    /// <summary>
+    /// Использовать TenantConnection middleware (получает connection string асинхронно)
+    /// Должен вызываться ПОСЛЕ UseTenantContext()
+    /// </summary>
+    public static IApplicationBuilder UseTenantConnection(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<TenantConnectionMiddleware>();
+    }
+
+    /// <summary>
+    /// Использовать полный tenant pipeline (TenantContext + TenantConnection)
+    /// </summary>
+    public static IApplicationBuilder UseTenantPipeline(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<TenantContextMiddleware>();
+        app.UseMiddleware<TenantConnectionMiddleware>();
+        return app;
+    }
 }

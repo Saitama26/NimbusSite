@@ -1,12 +1,13 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Tasks.Application.Abstractions;
+using Tasks.Contracts.Events;
+using Tasks.Contracts.Enums;
 using Tasks.Domain.Enums;
-using Contracts.Tasks;
 using Tasks.Domain.Errors;
-using Contracts.Tasks.Events;
 using TaskStatus = Tasks.Domain.Enums.TaskStatus;
 
 namespace Tasks.Application.Commands.UpdateTask;
@@ -16,6 +17,7 @@ namespace Tasks.Application.Commands.UpdateTask;
 /// </summary>
 public sealed record UpdateTaskCommand(
     Guid TaskId,
+    int TenantId,
     string? Title = null,
     string? Description = null,
     TaskPriority? Priority = null,
@@ -26,23 +28,24 @@ public sealed record UpdateTaskCommand(
 /// </summary>
 internal sealed class UpdateTaskCommandHandler : ICommandHandler<UpdateTaskCommand>
 {
-    private readonly ITaskRepository _repository;
+    private readonly ITasksDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public UpdateTaskCommandHandler(
-        ITaskRepository repository,
+        ITasksDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(UpdateTaskCommand command, CancellationToken cancellationToken)
     {
-        var task = await _repository.GetByIdAsync(command.TaskId, cancellationToken);
+        var task = await _dbContext.Tasks
+            .FirstOrDefaultAsync(t => t.Id == command.TaskId && t.TenantId == command.TenantId, cancellationToken);
         if (task == null)
         {
             return Result.Failure(TaskErrors.NotFound(command.TaskId));
@@ -94,22 +97,21 @@ internal sealed class UpdateTaskCommandHandler : ICommandHandler<UpdateTaskComma
         if (hasChanges)
         {
             task.UpdatedAt = DateTime.UtcNow;
-            var events = new List<IDomainEvent>
-            {
-                new TaskUpdatedEvent(
-                    task.Id,
-                    task.TenantId,
-                    task.ProjectId,
-                    task.Title,
-                    (TaskPriorityContract)(int)task.Priority,
-                    task.Description,
-                    task.DueDate,
-                    task.UpdatedAt)
-            };
 
-            await _repository.UpdateAsync(task, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _eventBus.PublishAsync(events, cancellationToken);
+
+            // Публикация интеграционного события
+            var @event = new TaskUpdatedEvent(
+                task.Id,
+                task.TenantId,
+                task.ProjectId,
+                task.Title,
+                task.Description,
+                (TaskPriorityContract?)(int?)task.Priority,
+                task.DueDate,
+                task.UpdatedAt);
+
+            await _eventBus.PublishAsync(@event, cancellationToken);
         }
 
         return Result.Success();

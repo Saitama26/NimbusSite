@@ -1,11 +1,19 @@
 using Common.Application.Abstractions.Messaging;
-using Tenants.Application.DTOs;
+using Tenants.Domain.Enums;
 
 namespace Tenants.Application.Queries.GetTenants;
 
 /// <summary>
 /// Запрос получения списка тенантов
-/// OData обрабатывает пагинацию, фильтрацию и сортировку через запросы ($skip, $top, $filter, $orderby)
 /// </summary>
-public sealed record GetTenantsQuery() : IQuery<IQueryable<TenantListItemDto>>;
+public sealed record GetTenantsQuery() : IQuery<IEnumerable<TenantListItemDto>>;
+
+/// <summary>
+/// DTO для списка тенантов (внутренний)
+/// </summary>
+public sealed record TenantListItemDto(
+    int TenantInt,
+    string Name,
+    TenantStatus Status,
+    DateTime CreatedAt);
 

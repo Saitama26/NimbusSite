@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Tasks.Application\Tasks.Application.csproj" />
     <ProjectReference Include="..\Tasks.Infrastructure\Tasks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Tenants\Tenants.Contracts\Tenants.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

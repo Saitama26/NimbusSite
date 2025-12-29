@@ -58,8 +58,8 @@ namespace Tasks.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -80,25 +80,6 @@ namespace Tasks.Infrastructure.Migrations
                     b.HasIndex("TenantId", "ProjectId", "Title");
 
                     b.ToTable("Tasks", (string)null);
-                });
-
-            modelBuilder.Entity("Tasks.Infrastructure.Persistence.Sharding.ShardMapEntry", b =>
-                {
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ConnectionString")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("ShardKey")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.HasKey("TenantId");
-
-                    b.ToTable("ShardMap", (string)null);
                 });
 
             modelBuilder.Entity("Tasks.Infrastructure.Views.ProjectsViews.ProjectView", b =>

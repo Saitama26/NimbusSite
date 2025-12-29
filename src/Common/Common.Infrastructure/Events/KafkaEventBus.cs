@@ -47,16 +47,16 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
         _logger.LogInformation("Kafka EventBus initialized. BootstrapServers: {BootstrapServers}, TopicPrefix: {TopicPrefix}", bootstrapServers, _topicPrefix);
     }
 
-    public async Task PublishAsync<TEvent>(TEvent domainEvent, CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent
+    public async Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
+        where TEvent : IIntegrationEvent
     {
-        var eventsList = new List<IDomainEvent> { domainEvent };
+        var eventsList = new List<IIntegrationEvent> { integrationEvent };
         await PublishAsync(eventsList, cancellationToken);
     }
 
-    public async Task PublishAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+    public async Task PublishAsync(IEnumerable<IIntegrationEvent> integrationEvents, CancellationToken cancellationToken = default)
     {
-        var eventsList = domainEvents.ToList();
+        var eventsList = integrationEvents.ToList();
         if (!eventsList.Any())
         {
             return;
@@ -64,13 +64,13 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
 
         _logger.LogInformation("Publishing {EventCount} event(s) to Kafka", eventsList.Count);
 
-        var tasks = eventsList.Select(async domainEvent =>
+        var tasks = eventsList.Select(async integrationEvent =>
         {
             try
             {
-                var envelope = CreateEnvelope(domainEvent);
+                var envelope = CreateEnvelope(integrationEvent);
                 var message = JsonSerializer.Serialize(envelope);
-                var topic = GetTopicName(domainEvent);
+                var topic = GetTopicName(integrationEvent);
                 
                 // Используем EventType как key для партиционирования
                 var messageKey = envelope.EventType;
@@ -81,7 +81,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
                     Value = message,
                     Headers = new Headers
                     {
-                        { "EventId", Encoding.UTF8.GetBytes(domainEvent.EventId.ToString()) },
+                        { "EventId", Encoding.UTF8.GetBytes(integrationEvent.EventId.ToString()) },
                         { "CorrelationId", Encoding.UTF8.GetBytes(envelope.CorrelationId.ToString()) },
                         { "Version", Encoding.UTF8.GetBytes(envelope.Version) }
                     }
@@ -103,7 +103,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
             }
             catch (ProduceException<string, string> ex)
             {
-                var errorMessage = $"Error publishing event {domainEvent.GetType().Name} to Kafka. Error: {ex.Error.Reason}";
+                var errorMessage = $"Error publishing event {integrationEvent.GetType().Name} to Kafka. Error: {ex.Error.Reason}";
                 
                 if (ex.Error.IsFatal)
                 {
@@ -121,7 +121,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
             catch (KafkaException ex)
             {
                 _logger.LogError(ex, "Kafka connection error while publishing event {EventType}: {Message}", 
-                    domainEvent.GetType().Name, ex.Message);
+                    integrationEvent.GetType().Name, ex.Message);
                 // При ошибке подключения логируем, но не прерываем выполнение приложения
             }
             catch (Exception ex)
@@ -129,7 +129,7 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
                 _logger.LogError(
                     ex,
                     "Unexpected error publishing event {EventType}",
-                    domainEvent.GetType().Name);
+                    integrationEvent.GetType().Name);
                 // Пробрасываем только критические ошибки
                 throw;
             }
@@ -138,40 +138,43 @@ public sealed class KafkaEventBus : IEventBus, IDisposable
         await Task.WhenAll(tasks);
     }
 
-    private static EventEnvelope CreateEnvelope(IDomainEvent domainEvent)
+    private static EventEnvelope CreateEnvelope(IIntegrationEvent integrationEvent)
     {
         // Извлекаем TenantId из события, если оно реализует IEventMetadata
-        var tenantId = domainEvent is IEventMetadata metadata ? metadata.TenantId : null;
+        var tenantId = integrationEvent is IEventMetadata metadata ? metadata.TenantId : null;
         
         // Генерируем CorrelationId, если его нет
-        var correlationId = domainEvent is IEventMetadata meta && meta.CorrelationId != Guid.Empty
+        var correlationId = integrationEvent is IEventMetadata meta && meta.CorrelationId != Guid.Empty
             ? meta.CorrelationId
             : Guid.NewGuid();
 
         var envelope = new EventEnvelope
         {
-            EventType = domainEvent.GetType().FullName ?? domainEvent.GetType().Name,
+            EventType = integrationEvent.GetType().FullName ?? integrationEvent.GetType().Name,
             Version = "1.0", // Можно извлекать из атрибутов события
-            Timestamp = domainEvent.OccurredOn,
+            Timestamp = integrationEvent.OccurredOn,
             CorrelationId = correlationId,
             TenantId = tenantId,
-            Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType())
+            Payload = JsonSerializer.Serialize(integrationEvent, integrationEvent.GetType())
         };
 
         return envelope;
     }
 
-    private string GetTopicName(IDomainEvent domainEvent)
+    private string GetTopicName(IIntegrationEvent integrationEvent)
     {
         // Topic = namespace последняя часть
-        // Например: Tenants.Domain.Events.TenantCreatedEvent -> domain-events-tenants
-        var eventType = domainEvent.GetType();
+        // Например: Contracts.Tenants.Events.TenantCreatedEvent -> domain-events-tenants
+        var eventType = integrationEvent.GetType();
         var namespaceParts = eventType.Namespace?.Split('.') ?? Array.Empty<string>();
         
         if (namespaceParts.Length > 0)
         {
-            // Берем первую часть namespace (например, Tenants, Users)
-            var moduleName = namespaceParts[0].ToLowerInvariant();
+            // Ищем модуль в namespace (например, Tenants, Users, Projects)
+            // Обычно структура: Contracts.{Module}.Events.{EventName}
+            var moduleName = namespaceParts
+                .FirstOrDefault(p => p != "Contracts" && p != "Events" && !string.IsNullOrEmpty(p))
+                ?.ToLowerInvariant() ?? "common";
             return $"{_topicPrefix}-{moduleName}";
         }
 

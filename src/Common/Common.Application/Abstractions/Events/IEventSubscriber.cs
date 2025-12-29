@@ -3,13 +3,13 @@ using Common.Domain.Events;
 namespace Common.Application.Abstractions.Events;
 
 /// <summary>
-/// Интерфейс для подписки на события из очереди сообщений (Kafka)
+/// Интерфейс для подписки на интеграционные события из очереди сообщений (Kafka)
 /// Используется модулями для обработки событий от других модулей
 /// </summary>
 public interface IEventSubscriber
 {
     /// <summary>
-    /// Подписаться на событие типа TEvent
+    /// Подписаться на интеграционное событие типа TEvent
     /// </summary>
     /// <typeparam name="TEvent">Тип события</typeparam>
     /// <param name="handler">Обработчик события</param>
@@ -17,13 +17,13 @@ public interface IEventSubscriber
     Task SubscribeAsync<TEvent>(
         Func<TEvent, CancellationToken, Task> handler,
         CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent;
+        where TEvent : IIntegrationEvent;
 
     /// <summary>
-    /// Отписаться от события типа TEvent
+    /// Отписаться от интеграционного события типа TEvent
     /// </summary>
     Task UnsubscribeAsync<TEvent>(CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent;
+        where TEvent : IIntegrationEvent;
 
     /// <summary>
     /// Начать прослушивание очереди событий

@@ -1,10 +1,11 @@
+using Common.Application.Abstractions;
+using Common.Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Tasks.Application.Abstractions;
 using Tasks.Application.Abstractions.Views;
-using Tasks.Infrastructure.Repositories;
-using Tasks.Infrastructure.Sharding;
+using Tasks.Infrastructure;
 using Tasks.Infrastructure.Views.ProjectsViews;
 using Tasks.Infrastructure.Views.TenantsViews;
 using Tasks.Infrastructure.Views.UsersViews;
@@ -14,29 +15,34 @@ namespace Tasks.Infrastructure.Extensions;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Регистрация инфраструктуры Tasks: DbContext, репозиторий, UoW, ShardResolver
+    /// Регистрация инфраструктуры Tasks: DbContext, UoW, Views
+    /// Работает с tenant-специфичной БД (таблицы в корне базы данных без схем)
+    /// Connection string определяется динамически через ShardResolver по TenantId из заголовка X-Tenant-Id
     /// </summary>
     public static IServiceCollection AddTasksInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Try environment variable first, then configuration
-        var connectionString = Environment.GetEnvironmentVariable("TASKS_DB_CONNECTION_STRING")
-            ?? configuration.GetConnectionString("DefaultConnection")
-            ?? configuration["ConnectionStrings:DefaultConnection"]
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' or 'TASKS_DB_CONNECTION_STRING' is not configured.");
+        // Регистрируем Tenancy сервисы (если еще не зарегистрированы)
+        services.AddTenancy(configuration);
 
-        services.AddDbContext<TasksDbContext>(options =>
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+        // Регистрируем фабрику DbContext для динамического connection string
+        services.AddScoped<IDbContextFactory<TasksDbContext>, TenantTasksDbContextFactory>();
 
-        services.AddScoped<ITaskRepository, TaskRepository>();
+        // Регистрируем DbContext через фабрику
+        services.AddScoped<TasksDbContext>(sp =>
+        {
+            var factory = sp.GetRequiredService<IDbContextFactory<TasksDbContext>>();
+            return factory.CreateDbContext();
+        });
+
+        // Регистрируем ITasksDbContext для использования в Application слое
+        services.AddScoped<ITasksDbContext>(sp => sp.GetRequiredService<TasksDbContext>());
+
+        services.AddScoped<IUnitOfWork, Tasks.Infrastructure.UnitOfWork.UnitOfWork>();
         services.AddScoped<IUserViewRepository, UserViewRepository>();
         services.AddScoped<IProjectViewRepository, ProjectViewRepository>();
         services.AddScoped<ITenantViewRepository, TenantViewRepository>();
-        services.AddScoped<IUnitOfWork, Tasks.Infrastructure.UnitOfWork.UnitOfWork>();
-        services.AddScoped<IShardResolver>(sp => new MySqlShardResolver(
-            sp.GetRequiredService<TasksDbContext>(),
-            connectionString));
 
         return services;
     }

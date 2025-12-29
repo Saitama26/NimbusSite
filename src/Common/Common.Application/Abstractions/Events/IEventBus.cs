@@ -3,20 +3,20 @@ using Common.Domain.Events;
 namespace Common.Application.Abstractions.Events;
 
 /// <summary>
-/// Интерфейс для публикации доменных событий в очередь сообщений (RabbitMQ/Kafka)
+/// Интерфейс для публикации интеграционных событий в очередь сообщений (Kafka)
 /// Используется для асинхронного взаимодействия между модулями
 /// </summary>
 public interface IEventBus
 {
     /// <summary>
-    /// Опубликовать одно событие в очередь
+    /// Опубликовать одно интеграционное событие в очередь
     /// </summary>
-    Task PublishAsync<TEvent>(TEvent domainEvent, CancellationToken cancellationToken = default)
-        where TEvent : IDomainEvent;
+    Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
+        where TEvent : IIntegrationEvent;
 
     /// <summary>
-    /// Опубликовать несколько событий в очередь
+    /// Опубликовать несколько интеграционных событий в очередь
     /// </summary>
-    Task PublishAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default);
+    Task PublishAsync(IEnumerable<IIntegrationEvent> integrationEvents, CancellationToken cancellationToken = default);
 }
 

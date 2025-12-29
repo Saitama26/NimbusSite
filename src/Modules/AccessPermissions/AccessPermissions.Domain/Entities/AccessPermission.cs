@@ -4,15 +4,15 @@ using AccessPermissions.Domain.Enums;
 namespace AccessPermissions.Domain.Entities;
 
 /// <summary>
-/// Сущность разрешения доступа - агрегатный корень домена AccessPermissions
+/// Сущность разрешения доступа
 /// Определяет права пользователя на выполнение действий в рамках тенанта или проекта
 /// </summary>
-public class AccessPermission : BaseEntity, IAggregateRoot
+public class AccessPermission : BaseEntity
 {
     /// <summary>
-    /// Идентификатор тенанта
+    /// Идентификатор тенанта (числовой)
     /// </summary>
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Идентификатор пользователя, которому предоставлено разрешение

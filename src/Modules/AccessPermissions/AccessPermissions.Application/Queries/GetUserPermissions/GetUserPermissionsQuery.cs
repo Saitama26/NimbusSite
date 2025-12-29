@@ -1,7 +1,9 @@
 using Common.Application.Abstractions.Messaging;
 using Common.Domain.Results;
 using AccessPermissions.Application.Abstractions;
-using AccessPermissions.Application.DTOs;
+using AccessPermissions.Contracts.Api.Responses;
+using AccessPermissions.Contracts.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessPermissions.Application.Queries.GetUserPermissions;
 
@@ -10,56 +12,51 @@ namespace AccessPermissions.Application.Queries.GetUserPermissions;
 /// </summary>
 public sealed record GetUserPermissionsQuery(
     Guid UserId,
-    Guid TenantId,
-    Guid? ProjectId = null) : IQuery<IEnumerable<AccessPermissionDto>>;
+    int TenantId,
+    Guid? ProjectId = null) : IQuery<IEnumerable<AccessPermissionResponse>>;
 
 /// <summary>
 /// Обработчик запроса получения разрешений пользователя
 /// </summary>
-internal sealed class GetUserPermissionsQueryHandler : IQueryHandler<GetUserPermissionsQuery, IEnumerable<AccessPermissionDto>>
+internal sealed class GetUserPermissionsQueryHandler : IQueryHandler<GetUserPermissionsQuery, IEnumerable<AccessPermissionResponse>>
 {
-    private readonly IAccessPermissionRepository _repository;
+    private readonly IAccessPermissionsDbContext _dbContext;
 
-    public GetUserPermissionsQueryHandler(IAccessPermissionRepository repository)
+    public GetUserPermissionsQueryHandler(IAccessPermissionsDbContext dbContext)
     {
-        _repository = repository;
+        _dbContext = dbContext;
     }
 
-    public async Task<Result<IEnumerable<AccessPermissionDto>>> Handle(GetUserPermissionsQuery query, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<AccessPermissionResponse>>> Handle(GetUserPermissionsQuery query, CancellationToken cancellationToken)
     {
-        IQueryable<AccessPermissions.Domain.Entities.AccessPermission> permissionsQuery;
+        var permissionsQuery = _dbContext.AccessPermissions
+            .AsNoTracking()
+            .Where(p => p.UserId == query.UserId && p.TenantId == query.TenantId && p.IsValid);
 
         if (query.ProjectId.HasValue)
         {
-            permissionsQuery = await _repository.GetByUserIdAndProjectIdAsync(query.UserId, query.ProjectId.Value, cancellationToken);
-        }
-        else
-        {
-            permissionsQuery = await _repository.GetByUserIdAndTenantIdAsync(query.UserId, query.TenantId, cancellationToken);
+            permissionsQuery = permissionsQuery.Where(p => p.ProjectId == query.ProjectId.Value);
         }
 
-        // Фильтруем только действительные разрешения
-        permissionsQuery = permissionsQuery.Where(p => p.IsValid);
+        var permissions = await permissionsQuery
+            .Select(p => new AccessPermissionResponse(
+                p.Id,
+                p.TenantId,
+                p.UserId,
+                p.ProjectId,
+                p.TaskId,
+                (PermissionScopeContract)(int)p.Scope,
+                (PermissionActionContract)(int)p.Action,
+                (PermissionTypeContract)(int)p.Type,
+                p.CreatedByUserId,
+                p.CreatedAt,
+                p.ExpiresAt,
+                p.Note,
+                p.UpdatedAt,
+                p.IsValid))
+            .ToListAsync(cancellationToken);
 
-        var permissions = await Task.FromResult(permissionsQuery.ToList());
-
-        var dtos = permissions.Select(p => new AccessPermissionDto(
-            p.Id,
-            p.TenantId,
-            p.UserId,
-            p.ProjectId,
-            p.TaskId,
-            p.Scope,
-            p.Action,
-            p.Type,
-            p.CreatedByUserId,
-            p.CreatedAt,
-            p.ExpiresAt,
-            p.Note,
-            p.UpdatedAt,
-            p.IsValid));
-
-        return Result<IEnumerable<AccessPermissionDto>>.Success(dtos);
+        return Result<IEnumerable<AccessPermissionResponse>>.Success(permissions);
     }
 }
 

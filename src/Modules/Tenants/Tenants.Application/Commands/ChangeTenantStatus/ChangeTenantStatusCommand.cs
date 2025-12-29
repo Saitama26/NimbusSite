@@ -1,12 +1,14 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tenants.Application.Abstractions;
+using Tenants.Contracts.Events;
+using Tenants.Contracts.Enums;
 using Tenants.Domain.Enums;
-using Contracts.Tenants;
 using Tenants.Domain.Errors;
-using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.ChangeTenantStatus;
 
@@ -14,7 +16,7 @@ namespace Tenants.Application.Commands.ChangeTenantStatus;
 /// Команда изменения статуса тенанта
 /// </summary>
 public sealed record ChangeTenantStatusCommand(
-    Guid TenantId,
+    int TenantInt,
     TenantStatus NewStatus) : ICommand;
 
 /// <summary>
@@ -22,27 +24,31 @@ public sealed record ChangeTenantStatusCommand(
 /// </summary>
 internal sealed class ChangeTenantStatusCommandHandler : ICommandHandler<ChangeTenantStatusCommand>
 {
-    private readonly ITenantRepository _repository;
+    private readonly ITenantsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
+    private readonly ILogger<ChangeTenantStatusCommandHandler> _logger;
 
     public ChangeTenantStatusCommandHandler(
-        ITenantRepository repository,
+        ITenantsDbContext dbContext,
         IUnitOfWork unitOfWork,
-        IEventBus eventBus)
+        IEventBus eventBus,
+        ILogger<ChangeTenantStatusCommandHandler> logger)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
+        _logger = logger;
     }
 
     public async Task<Result> Handle(ChangeTenantStatusCommand command, CancellationToken cancellationToken)
     {
-        // Найти тенанта
-        var tenant = await _repository.GetByIdAsync(command.TenantId, cancellationToken);
+        var tenant = await _dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.TenantInt == command.TenantInt, cancellationToken);
+
         if (tenant == null)
         {
-            return Result.Failure(TenantErrors.NotFound(command.TenantId));
+            return Result.Failure(TenantErrors.NotFound(command.TenantInt));
         }
 
         // Проверка, что статус изменился
@@ -56,17 +62,20 @@ internal sealed class ChangeTenantStatusCommandHandler : ICommandHandler<ChangeT
         // Изменение статуса
         tenant.Status = command.NewStatus;
         tenant.UpdatedAt = DateTime.UtcNow;
-        var events = new List<IDomainEvent>
-        {
-            new TenantStatusChangedEvent(tenant.Id, (TenantStatusContract)(int)oldStatus, (TenantStatusContract)(int)command.NewStatus, tenant.UpdatedAt)
-        };
 
-        // Сохранение
-        await _repository.UpdateAsync(tenant, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Публикация событий
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события в Kafka для других модулей
+        var @event = new TenantStatusChangedEvent(
+            tenant.TenantInt,
+            (TenantStatusContract)(int)oldStatus,
+            (TenantStatusContract)(int)command.NewStatus,
+            tenant.UpdatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
+
+        _logger.LogInformation("Tenant {TenantInt} status changed: {OldStatus} -> {NewStatus}", 
+            tenant.TenantInt, oldStatus, command.NewStatus);
 
         return Result.Success();
     }

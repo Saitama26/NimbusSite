@@ -33,10 +33,23 @@ public static class ProjectRootHelper
     }
 
     /// <summary>
-    /// Загружает .env файл из корня проекта
+    /// Загружает .env файл из корня проекта (только для локальной разработки)
+    /// В CI/CD окружениях переменные должны передаваться через Environment Variables
+    /// Этот метод безопасно игнорирует отсутствие .env файла
     /// </summary>
     /// <param name="startDirectory">Начальная директория для поиска корня проекта</param>
     /// <returns>true, если .env файл был найден и загружен, иначе false</returns>
+    /// <remarks>
+    /// Порядок приоритета конфигурации в ASP.NET Core:
+    /// 1. appsettings.json (низкий приоритет)
+    /// 2. appsettings.{Environment}.json
+    /// 3. User Secrets (только Development)
+    /// 4. Environment Variables (высокий приоритет) - включая переменные из .env
+    /// 5. Command Line Arguments (наивысший приоритет)
+    /// 
+    /// Если .env файл отсутствует (как в CI/CD), переменные окружения из системы
+    /// будут использоваться напрямую через builder.Configuration.AddEnvironmentVariables()
+    /// </remarks>
     public static bool LoadEnvFromProjectRoot(string? startDirectory = null)
     {
         var projectRoot = FindProjectRoot(startDirectory);

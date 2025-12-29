@@ -1,4 +1,4 @@
-using Projects.Application.Abstractions;
+using Common.Application.Abstractions;
 
 namespace Projects.Infrastructure;
 

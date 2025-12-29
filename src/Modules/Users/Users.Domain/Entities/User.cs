@@ -3,13 +3,18 @@ using Common.Domain.Entities;
 namespace Users.Domain.Entities;
 
 /// <summary>
-/// Сущность пользователя - агрегатный корень домена Users
-/// Пользователь может существовать без тенанта и быть в нескольких тенантах
+/// Сущность пользователя
+/// Пользователь существует в tenant-специфичной БД со схемой Users
 /// </summary>
-public class User : BaseEntity, IAggregateRoot
+public class User : BaseEntity
 {
     /// <summary>
-    /// Email пользователя (глобально уникальный)
+    /// Tenant ID (числовой идентификатор тенанта)
+    /// </summary>
+    public int TenantId { get; set; }
+
+    /// <summary>
+    /// Email пользователя (уникальный в рамках тенанта)
     /// </summary>
     public string Email { get; set; } = string.Empty;
 

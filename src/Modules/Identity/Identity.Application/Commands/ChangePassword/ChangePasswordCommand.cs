@@ -1,14 +1,14 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
 using Identity.Application.Abstractions;
+using Identity.Contracts.Events;
 using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.Errors;
-using Contracts.Identity.Events;
-using IdentityUnitOfWork = Identity.Application.Abstractions.IUnitOfWork;
+using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Application.Commands.ChangePassword;
 
@@ -17,6 +17,7 @@ namespace Identity.Application.Commands.ChangePassword;
 /// </summary>
 public sealed record ChangePasswordCommand(
     Guid UserId,
+    int TenantId,
     string CurrentPassword,
     string NewPassword,
     bool RevokeAllSessions = true,
@@ -28,24 +29,18 @@ public sealed record ChangePasswordCommand(
 /// </summary>
 internal sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswordCommand>
 {
-    private readonly IUserCredentialsRepository _credentialsRepository;
-    private readonly ISessionRepository _sessionRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IIdentityDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IdentityUnitOfWork _unitOfWork;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public ChangePasswordCommandHandler(
-        IUserCredentialsRepository credentialsRepository,
-        ISessionRepository sessionRepository,
-        IRefreshTokenRepository refreshTokenRepository,
+        IIdentityDbContext dbContext,
         IPasswordHasher passwordHasher,
-        IdentityUnitOfWork unitOfWork,
+        IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _credentialsRepository = credentialsRepository;
-        _sessionRepository = sessionRepository;
-        _refreshTokenRepository = refreshTokenRepository;
+        _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
@@ -54,7 +49,8 @@ internal sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePassw
     public async Task<Result> Handle(ChangePasswordCommand command, CancellationToken cancellationToken)
     {
         // 1. Найти учетные данные пользователя
-        var credentials = await _credentialsRepository.GetByUserIdAsync(command.UserId, cancellationToken);
+        var credentials = await _dbContext.UserCredentials
+            .FirstOrDefaultAsync(c => c.UserId == command.UserId && c.TenantId == command.TenantId, cancellationToken);
         if (credentials == null)
         {
             return Result.Failure(IdentityErrors.UserNotFound(command.UserId));
@@ -74,31 +70,30 @@ internal sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePassw
         credentials.PasswordHash = newPasswordHash;
         credentials.PasswordChangedAt = DateTime.UtcNow;
         credentials.UpdatedAt = DateTime.UtcNow;
-        await _credentialsRepository.UpdateAsync(credentials, cancellationToken);
 
         // 5. Если RevokeAllSessions = true, отозвать все сессии и токены
         if (command.RevokeAllSessions)
         {
             // Отозвать все активные сессии
-            var sessions = await _sessionRepository.GetByUserIdAsync(command.UserId, cancellationToken);
-            var activeSessions = sessions.Where(s => s.IsActive).ToList();
+            var sessions = await _dbContext.Sessions
+                .Where(s => s.UserId == command.UserId && s.TenantId == command.TenantId && s.IsActive)
+                .ToListAsync(cancellationToken);
 
-            foreach (var session in activeSessions)
+            foreach (var session in sessions)
             {
                 session.Status = SessionStatus.Revoked;
                 session.ClosedAt = DateTime.UtcNow;
                 session.CloseReason = "Password changed";
-                await _sessionRepository.UpdateAsync(session, cancellationToken);
 
                 // Отозвать связанный refresh token, если есть
                 if (session.RefreshTokenId.HasValue)
                 {
-                    var refreshToken = await _refreshTokenRepository.GetByIdAsync(session.RefreshTokenId.Value, cancellationToken);
+                    var refreshToken = await _dbContext.RefreshTokens
+                        .FirstOrDefaultAsync(rt => rt.Id == session.RefreshTokenId.Value, cancellationToken);
                     if (refreshToken != null && refreshToken.IsValid)
                     {
                         refreshToken.RevokedAt = DateTime.UtcNow;
                         refreshToken.RevocationReason = "Password changed";
-                        await _refreshTokenRepository.UpdateAsync(refreshToken, cancellationToken);
                     }
                 }
             }
@@ -108,19 +103,15 @@ internal sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePassw
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 7. Опубликовать событие PasswordChangedEvent
-        var tenantId = credentials.TenantId ?? Guid.Empty; // Если TenantId null, используем Guid.Empty
-        var events = new List<IDomainEvent>
-        {
-            new PasswordChangedEvent(
-                command.UserId,
-                tenantId,
-                command.RevokeAllSessions,
-                DateTime.UtcNow,
-                command.IpAddress,
-                command.UserAgent)
-        };
+        var @event = new PasswordChangedEvent(
+            command.UserId,
+            credentials.TenantId,
+            command.RevokeAllSessions,
+            DateTime.UtcNow,
+            command.IpAddress,
+            command.UserAgent);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }
@@ -135,6 +126,9 @@ internal sealed class ChangePasswordCommandValidator : AbstractValidator<ChangeP
     {
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("User ID is required.");
+
+        RuleFor(x => x.TenantId)
+            .GreaterThan(0).WithMessage("Tenant ID must be greater than 0.");
 
         RuleFor(x => x.CurrentPassword)
             .NotEmpty().WithMessage("Current password is required.");

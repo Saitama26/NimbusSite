@@ -5,8 +5,9 @@ namespace Identity.Domain.Entities;
 /// <summary>
 /// Учетные данные пользователя для аутентификации
 /// Создается автоматически при создании пользователя через событие UserCreatedEvent
+/// Существует в tenant-специфичной БД со схемой Identity
 /// </summary>
-public class UserCredentials : BaseEntity, IAggregateRoot
+public class UserCredentials : BaseEntity
 {
     /// <summary>
     /// Идентификатор пользователя (из модуля Users)
@@ -14,9 +15,9 @@ public class UserCredentials : BaseEntity, IAggregateRoot
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Идентификатор тенанта (nullable, так как пользователь может быть без тенанта)
+    /// Tenant ID (числовой идентификатор тенанта)
     /// </summary>
-    public Guid? TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Email пользователя (дублируется из Users для быстрого поиска)

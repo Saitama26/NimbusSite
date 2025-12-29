@@ -5,14 +5,15 @@ using TaskStatus = Tasks.Domain.Enums.TaskStatus;
 namespace Tasks.Domain.Entities;
 
 /// <summary>
-/// Сущность задачи - агрегатный корень домена Tasks
+/// Сущность задачи
+/// Задача существует в tenant-специфичной БД со схемой Tasks
 /// </summary>
-public class Task : BaseEntity, IAggregateRoot
+public class Task : BaseEntity
 {
     /// <summary>
-    /// Идентификатор тенанта, которому принадлежит задача
+    /// Tenant ID (числовой идентификатор тенанта)
     /// </summary>
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Идентификатор проекта, к которому относится задача

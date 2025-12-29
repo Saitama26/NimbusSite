@@ -3,15 +3,15 @@ using Common.Domain.Events;
 namespace Common.Application.Abstractions.Events;
 
 /// <summary>
-/// Интерфейс обработчика доменного события
+/// Интерфейс обработчика интеграционного события
 /// </summary>
 /// <typeparam name="TEvent">Тип события</typeparam>
 public interface IEventHandler<in TEvent>
-    where TEvent : IDomainEvent
+    where TEvent : IIntegrationEvent
 {
     /// <summary>
-    /// Обработать событие
+    /// Обработать интеграционное событие
     /// </summary>
-    Task Handle(TEvent domainEvent, CancellationToken cancellationToken = default);
+    Task Handle(TEvent integrationEvent, CancellationToken cancellationToken = default);
 }
 

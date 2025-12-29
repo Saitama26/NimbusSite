@@ -4,14 +4,15 @@ using Projects.Domain.Enums;
 namespace Projects.Domain.Entities;
 
 /// <summary>
-/// Сущность проекта.
+/// Сущность проекта
+/// Проект существует в tenant-специфичной БД со схемой Projects
 /// </summary>
-public class Project : BaseEntity, IAggregateRoot
+public class Project : BaseEntity
 {
     /// <summary>
-    /// Идентификатор тенанта, которому принадлежит проект.
+    /// Tenant ID (числовой идентификатор тенанта)
     /// </summary>
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; }
 
     /// <summary>
     /// Название проекта.

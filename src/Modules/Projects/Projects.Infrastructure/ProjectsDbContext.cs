@@ -1,15 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Projects.Application.Abstractions;
 using Projects.Domain.Entities;
 using Projects.Infrastructure.Persistence.Configurations;
-using Projects.Infrastructure.Persistence.Sharding;
 using Projects.Infrastructure.Views.UsersViews;
 
 namespace Projects.Infrastructure;
 
 /// <summary>
-/// DbContext для Projects.
+/// DbContext для Projects
+/// Работает с tenant-специфичной БД (таблицы в корне базы данных без схем)
 /// </summary>
-public class ProjectsDbContext : DbContext
+public class ProjectsDbContext : DbContext, IProjectsDbContext
 {
     public ProjectsDbContext(DbContextOptions<ProjectsDbContext> options) : base(options)
     {
@@ -17,15 +18,20 @@ public class ProjectsDbContext : DbContext
 
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectUser> ProjectUsers => Set<ProjectUser>();
-    public DbSet<ShardMapEntry> ShardMapEntries => Set<ShardMapEntry>();
     public DbSet<UserView> UserViews => Set<UserView>();
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return base.SaveChangesAsync(cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Применяем конфигурации
         modelBuilder.ApplyConfiguration(new ProjectConfiguration());
         modelBuilder.ApplyConfiguration(new ProjectUserConfiguration());
-        modelBuilder.ApplyConfiguration(new ShardMapConfiguration());
         modelBuilder.ApplyConfiguration(new UserViewConfiguration());
+        
         base.OnModelCreating(modelBuilder);
     }
 }

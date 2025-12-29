@@ -1,4 +1,4 @@
-using Identity.Application.Abstractions;
+using Common.Application.Abstractions;
 
 namespace Identity.Infrastructure.UnitOfWork;
 

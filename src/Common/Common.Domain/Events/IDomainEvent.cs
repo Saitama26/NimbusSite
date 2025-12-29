@@ -1,9 +1,10 @@
 namespace Common.Domain.Events;
 
 /// <summary>
-/// Базовый интерфейс для всех доменных событий
+/// Базовый интерфейс для всех интеграционных событий
+/// Используется для асинхронного взаимодействия между модулями через Kafka
 /// </summary>
-public interface IDomainEvent
+public interface IIntegrationEvent
 {
     /// <summary>
     /// Уникальный идентификатор события

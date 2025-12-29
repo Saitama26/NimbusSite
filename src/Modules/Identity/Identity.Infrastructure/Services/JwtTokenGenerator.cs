@@ -35,7 +35,7 @@ internal sealed class JwtTokenGenerator : IJwtTokenGenerator
             configuration["Jwt:RefreshTokenExpirationDays"] ?? "30");
     }
 
-    public string GenerateAccessToken(Guid userId, Guid tenantId, IEnumerable<string>? roles = null)
+    public string GenerateAccessToken(Guid userId, int tenantId, IEnumerable<string>? roles = null)
     {
         var claims = new List<Claim>
         {

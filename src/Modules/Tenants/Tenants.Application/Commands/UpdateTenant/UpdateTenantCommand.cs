@@ -1,10 +1,13 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Tenants.Application.Abstractions;
+using Tenants.Contracts.Events;
 using Tenants.Domain.Errors;
-using Contracts.Tenants.Events;
 
 namespace Tenants.Application.Commands.UpdateTenant;
 
@@ -12,37 +15,43 @@ namespace Tenants.Application.Commands.UpdateTenant;
 /// Команда обновления тенанта
 /// </summary>
 public sealed record UpdateTenantCommand(
-    Guid TenantId,
+    int TenantInt,
     string? Name = null,
-    string? Description = null,
-    string? AdminEmail = null) : ICommand;
+    string? Description = null) : ICommand;
 
 /// <summary>
 /// Обработчик команды обновления тенанта
 /// </summary>
 internal sealed class UpdateTenantCommandHandler : ICommandHandler<UpdateTenantCommand>
 {
-    private readonly ITenantRepository _repository;
+    private readonly ITenantsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<UpdateTenantCommandHandler> _logger;
 
     public UpdateTenantCommandHandler(
-        ITenantRepository repository,
+        ITenantsDbContext dbContext,
         IUnitOfWork unitOfWork,
-        IEventBus eventBus)
+        IEventBus eventBus,
+        IServiceProvider serviceProvider,
+        ILogger<UpdateTenantCommandHandler> logger)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     public async Task<Result> Handle(UpdateTenantCommand command, CancellationToken cancellationToken)
     {
-        // Найти тенанта
-        var tenant = await _repository.GetByIdAsync(command.TenantId, cancellationToken);
+        var tenant = await _dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.TenantInt == command.TenantInt, cancellationToken);
+
         if (tenant == null)
         {
-            return Result.Failure(TenantErrors.NotFound(command.TenantId));
+            return Result.Failure(TenantErrors.NotFound(command.TenantInt));
         }
 
         var hasChanges = false;
@@ -60,30 +69,23 @@ internal sealed class UpdateTenantCommandHandler : ICommandHandler<UpdateTenantC
             hasChanges = true;
         }
 
-        if (!string.IsNullOrWhiteSpace(command.AdminEmail) && tenant.AdminEmail != command.AdminEmail.Trim())
-        {
-            tenant.AdminEmail = command.AdminEmail.Trim();
-            hasChanges = true;
-        }
-
         if (hasChanges)
         {
             tenant.UpdatedAt = DateTime.UtcNow;
-            var events = new List<IDomainEvent>
-            {
-                new TenantUpdatedEvent(
-                    tenant.Id,
-                    tenant.Name,
-                    tenant.Description,
-                    tenant.UpdatedAt)
-            };
-
-            // Сохранение
-            await _repository.UpdateAsync(tenant, cancellationToken);
+            
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Публикация событий
-            await _eventBus.PublishAsync(events, cancellationToken);
+            // Публикация интеграционного события в Kafka для других модулей
+            var @event = new TenantUpdatedEvent(
+                tenant.TenantInt,
+                tenant.Name,
+                tenant.Description,
+                tenant.UpdatedAt);
+
+            await _eventBus.PublishAsync(@event, cancellationToken);
+
+            _logger.LogInformation("Tenant {TenantInt} updated: Name={Name}, Description={Description}", 
+                tenant.TenantInt, tenant.Name, tenant.Description ?? "(null)");
 
             return Result.Success();
         }

@@ -1,12 +1,13 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
+using Microsoft.EntityFrameworkCore;
 using Tasks.Application.Abstractions;
+using Tasks.Contracts.Events;
+using Tasks.Contracts.Enums;
 using Tasks.Domain.Enums;
-using Contracts.Tasks;
 using Tasks.Domain.Errors;
-using Contracts.Tasks.Events;
 using TaskStatus = Tasks.Domain.Enums.TaskStatus;
 
 namespace Tasks.Application.Commands.ChangeTaskStatus;
@@ -16,6 +17,7 @@ namespace Tasks.Application.Commands.ChangeTaskStatus;
 /// </summary>
 public sealed record ChangeTaskStatusCommand(
     Guid TaskId,
+    int TenantId,
     TaskStatus NewStatus) : ICommand;
 
 /// <summary>
@@ -23,26 +25,32 @@ public sealed record ChangeTaskStatusCommand(
 /// </summary>
 internal sealed class ChangeTaskStatusCommandHandler : ICommandHandler<ChangeTaskStatusCommand>
 {
-    private readonly ITaskRepository _repository;
+    private readonly ITasksDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public ChangeTaskStatusCommandHandler(
-        ITaskRepository repository,
+        ITasksDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
 
     public async Task<Result> Handle(ChangeTaskStatusCommand command, CancellationToken cancellationToken)
     {
-        var task = await _repository.GetByIdAsync(command.TaskId, cancellationToken);
+        var task = await _dbContext.Tasks
+            .FirstOrDefaultAsync(t => t.Id == command.TaskId && t.TenantId == command.TenantId, cancellationToken);
         if (task == null)
         {
             return Result.Failure(TaskErrors.NotFound(command.TaskId));
+        }
+
+        if (task.Status == TaskStatus.Deleted)
+        {
+            return Result.Failure(TaskErrors.AlreadyDeleted);
         }
 
         if (task.Status == command.NewStatus)
@@ -71,22 +79,20 @@ internal sealed class ChangeTaskStatusCommandHandler : ICommandHandler<ChangeTas
             task.CompletedAt = null;
         }
 
-        var events = new List<IDomainEvent>
-        {
-            new TaskStatusChangedEvent(
-                task.Id,
-                task.TenantId,
-                task.ProjectId,
-                (TaskStatusContract)(int)oldStatus,
-                (TaskStatusContract)(int)command.NewStatus,
-                task.StartedAt,
-                task.CompletedAt,
-                task.UpdatedAt)
-        };
-
-        await _repository.UpdateAsync(task, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        await _eventBus.PublishAsync(events, cancellationToken);
+
+        // Публикация интеграционного события
+        var @event = new TaskStatusChangedEvent(
+            task.Id,
+            task.TenantId,
+            task.ProjectId,
+            (TaskStatusContract)(int)oldStatus,
+            (TaskStatusContract)(int)command.NewStatus,
+            task.StartedAt,
+            task.CompletedAt,
+            task.UpdatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result.Success();
     }

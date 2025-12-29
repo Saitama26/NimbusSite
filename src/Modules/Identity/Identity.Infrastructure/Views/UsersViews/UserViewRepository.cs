@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Identity.Application.Abstractions.Views;
 using Microsoft.EntityFrameworkCore;
+using Users.Contracts.Enums;
 
 namespace Identity.Infrastructure.Views.UsersViews;
 
@@ -25,9 +26,28 @@ internal sealed class UserViewRepository : IUserViewRepository
             .Select(x => new UserViewDto
             {
                 Id = x.Id,
+                TenantId = x.TenantId,
                 Email = x.Email,
                 Name = x.Name,
-                Status = x.Status,
+                Status = (UserStatusContract)(int)x.Status,
+                UpdatedAt = x.UpdatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<UserViewDto?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var emailLower = email.ToLowerInvariant().Trim();
+        return await _dbContext.UserViews
+            .AsNoTracking()
+            .Where(x => x.Email == emailLower)
+            .Select(x => new UserViewDto
+            {
+                Id = x.Id,
+                TenantId = x.TenantId,
+                Email = x.Email,
+                Name = x.Name,
+                Status = (UserStatusContract)(int)x.Status,
                 UpdatedAt = x.UpdatedAt
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -47,9 +67,10 @@ internal sealed class UserViewRepository : IUserViewRepository
             .Select(x => new UserViewDto
             {
                 Id = x.Id,
+                TenantId = x.TenantId,
                 Email = x.Email,
                 Name = x.Name,
-                Status = x.Status,
+                Status = (UserStatusContract)(int)x.Status,
                 UpdatedAt = x.UpdatedAt
             })
             .ToListAsync(cancellationToken);

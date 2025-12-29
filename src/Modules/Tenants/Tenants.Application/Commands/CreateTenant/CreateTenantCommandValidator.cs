@@ -13,9 +13,6 @@ internal sealed class CreateTenantCommandValidator : AbstractValidator<CreateTen
             .NotEmpty().WithMessage("Tenant name is required.")
             .MaximumLength(200).WithMessage("Tenant name must not exceed 200 characters.");
 
-        RuleFor(x => x.CreatedByUserId)
-            .NotEmpty().WithMessage("CreatedByUserId is required.");
-
         RuleFor(x => x.Description)
             .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
             .When(x => !string.IsNullOrWhiteSpace(x.Description));

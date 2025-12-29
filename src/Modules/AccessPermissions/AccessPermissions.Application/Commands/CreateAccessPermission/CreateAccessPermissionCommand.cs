@@ -1,14 +1,16 @@
+using Common.Application.Abstractions;
 using Common.Application.Abstractions.Events;
 using Common.Application.Abstractions.Messaging;
-using Common.Domain.Events;
 using Common.Domain.Results;
 using FluentValidation;
 using AccessPermissions.Application.Abstractions;
+using AccessPermissions.Contracts.Api.Responses;
+using AccessPermissions.Contracts.Enums;
+using AccessPermissions.Contracts.Events;
 using AccessPermissions.Domain.Entities;
 using AccessPermissions.Domain.Enums;
 using AccessPermissions.Domain.Errors;
-using Contracts.AccessPermissions.Events;
-using Contracts.AccessPermissions;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccessPermissions.Application.Commands.CreateAccessPermission;
 
@@ -16,7 +18,7 @@ namespace AccessPermissions.Application.Commands.CreateAccessPermission;
 /// Команда создания разрешения доступа
 /// </summary>
 public sealed record CreateAccessPermissionCommand(
-    Guid TenantId,
+    int TenantId,
     Guid UserId,
     PermissionScope Scope,
     PermissionAction Action,
@@ -28,25 +30,20 @@ public sealed record CreateAccessPermissionCommand(
     string? Note = null) : ICommand<CreateAccessPermissionResponse>;
 
 /// <summary>
-/// Ответ при создании разрешения доступа
-/// </summary>
-public sealed record CreateAccessPermissionResponse(Guid PermissionId);
-
-/// <summary>
 /// Обработчик команды создания разрешения доступа
 /// </summary>
 internal sealed class CreateAccessPermissionCommandHandler : ICommandHandler<CreateAccessPermissionCommand, CreateAccessPermissionResponse>
 {
-    private readonly IAccessPermissionRepository _repository;
+    private readonly IAccessPermissionsDbContext _dbContext;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _eventBus;
 
     public CreateAccessPermissionCommandHandler(
-        IAccessPermissionRepository repository,
+        IAccessPermissionsDbContext dbContext,
         IUnitOfWork unitOfWork,
         IEventBus eventBus)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _unitOfWork = unitOfWork;
         _eventBus = eventBus;
     }
@@ -65,15 +62,16 @@ internal sealed class CreateAccessPermissionCommandHandler : ICommandHandler<Cre
         }
 
         // Проверка на дубликат
-        var exists = await _repository.ExistsAsync(
-            command.TenantId,
-            command.UserId,
-            command.Scope,
-            command.Action,
-            command.Type,
-            command.ProjectId,
-            command.TaskId,
-            cancellationToken);
+        var exists = await _dbContext.AccessPermissions
+            .AnyAsync(p =>
+                p.TenantId == command.TenantId &&
+                p.UserId == command.UserId &&
+                p.Scope == command.Scope &&
+                p.Action == command.Action &&
+                p.Type == command.Type &&
+                p.ProjectId == command.ProjectId &&
+                p.TaskId == command.TaskId,
+                cancellationToken);
 
         if (exists)
         {
@@ -95,27 +93,25 @@ internal sealed class CreateAccessPermissionCommandHandler : ICommandHandler<Cre
             Note = command.Note?.Trim()
         };
 
-        var events = new List<IDomainEvent>
-        {
-            new AccessPermissionCreatedEvent(
-                permission.Id,
-                permission.TenantId,
-                permission.UserId,
-                (PermissionScopeContract)(int)permission.Scope,
-                (PermissionActionContract)(int)permission.Action,
-                (PermissionTypeContract)(int)permission.Type,
-                permission.CreatedByUserId,
-                permission.ProjectId,
-                permission.TaskId,
-                permission.ExpiresAt,
-                permission.Note,
-                permission.CreatedAt)
-        };
-
-        await _repository.AddAsync(permission, cancellationToken);
+        _dbContext.AccessPermissions.Add(permission);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _eventBus.PublishAsync(events, cancellationToken);
+        // Публикация интеграционного события
+        var @event = new AccessPermissionCreatedEvent(
+            permission.Id,
+            permission.TenantId,
+            permission.UserId,
+            (PermissionScopeContract)(int)permission.Scope,
+            (PermissionActionContract)(int)permission.Action,
+            (PermissionTypeContract)(int)permission.Type,
+            permission.CreatedByUserId,
+            permission.ProjectId,
+            permission.TaskId,
+            permission.ExpiresAt,
+            permission.Note,
+            permission.CreatedAt);
+
+        await _eventBus.PublishAsync(@event, cancellationToken);
 
         return Result<CreateAccessPermissionResponse>.Success(new CreateAccessPermissionResponse(permission.Id));
     }

@@ -13,6 +13,9 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
 
+        builder.Property(x => x.TenantId)
+            .IsRequired();
+
         builder.Property(x => x.Email)
             .IsRequired()
             .HasMaxLength(255);
@@ -37,8 +40,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(x => x.LastLoginAt);
 
-        // Email глобально уникальный (не в рамках тенанта)
-        builder.HasIndex(x => x.Email).IsUnique();
+        // Email уникальный в рамках тенанта
+        builder.HasIndex(x => new { x.TenantId, x.Email }).IsUnique();
     }
 }
 

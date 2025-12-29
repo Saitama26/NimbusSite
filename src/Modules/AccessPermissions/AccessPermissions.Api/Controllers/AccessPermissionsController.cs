@@ -1,13 +1,16 @@
 using Common.Application.Abstractions.Messaging;
+using Common.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 using AccessPermissions.Application.Commands.CreateAccessPermission;
 using AccessPermissions.Application.Commands.DeleteAccessPermission;
 using AccessPermissions.Application.Commands.UpdateAccessPermission;
-using AccessPermissions.Application.DTOs;
 using AccessPermissions.Application.Queries.GetAccessPermissionById;
 using AccessPermissions.Application.Queries.GetAccessPermissions;
 using AccessPermissions.Application.Queries.GetUserPermissions;
-using Contracts.AccessPermissions;
+using AccessPermissions.Contracts.Api.Requests;
+using AccessPermissions.Contracts.Api.Responses;
+using AccessPermissions.Contracts.Enums;
+using AccessPermissions.Domain.Enums;
 
 namespace AccessPermissions.Api.Controllers;
 
@@ -38,15 +41,30 @@ public class AccessPermissionsController : ControllerBase
     [ProducesResponseType(typeof(CreateAccessPermissionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateAccessPermissionResponse>> Create([FromBody] CreateAccessPermissionCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult<CreateAccessPermissionResponse>> Create(
+        [FromBody] CreateAccessPermissionRequest request,
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
+        CancellationToken cancellationToken)
     {
+        var command = new CreateAccessPermissionCommand(
+            tenantId,
+            request.UserId,
+            (PermissionScope)(int)request.Scope,
+            (PermissionAction)(int)request.Action,
+            (PermissionType)(int)request.Type,
+            request.CreatedByUserId,
+            request.ProjectId,
+            request.TaskId,
+            request.ExpiresAt,
+            request.Note);
+
         var result = await _sender.Send<CreateAccessPermissionCommand, CreateAccessPermissionResponse>(command, cancellationToken);
         if (!result.IsSuccess)
         {
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return CreatedAtAction(nameof(GetById), new { permissionId = result.Value!.PermissionId }, result.Value);
+        return CreatedAtAction(nameof(GetById), new { permissionId = result.Value!.PermissionId, tenantId }, result.Value);
     }
 
     /// <summary>
@@ -59,16 +77,19 @@ public class AccessPermissionsController : ControllerBase
     /// <response code="404">Разрешение не найдено</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpGet("{permissionId:guid}")]
-    [ProducesResponseType(typeof(AccessPermissionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccessPermissionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<AccessPermissionDto>> GetById(Guid permissionId, CancellationToken cancellationToken)
+    public async Task<ActionResult<AccessPermissionResponse>> GetById(
+        Guid permissionId,
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
+        CancellationToken cancellationToken)
     {
-        var query = new GetAccessPermissionByIdQuery(permissionId);
+        var query = new GetAccessPermissionByIdQuery(permissionId, tenantId);
         var result = await _sender.Send(query, cancellationToken);
         if (!result.IsSuccess)
         {
-            return result.Error?.Type == Common.Domain.Results.ErrorType.NotFound
+            return result.Error?.Type == ErrorType.NotFound
                 ? NotFound(result.Error.Description)
                 : Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
@@ -91,10 +112,10 @@ public class AccessPermissionsController : ControllerBase
     /// <response code="200">Список разрешений получен</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<AccessPermissionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<AccessPermissionResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IEnumerable<AccessPermissionDto>>> GetPermissions(
-        [FromQuery] Guid? tenantId = null,
+    public async Task<ActionResult<IEnumerable<AccessPermissionResponse>>> GetPermissions(
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
         [FromQuery] Guid? userId = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? taskId = null,
@@ -108,9 +129,9 @@ public class AccessPermissionsController : ControllerBase
             userId,
             projectId,
             taskId,
-            scope.HasValue ? (AccessPermissions.Domain.Enums.PermissionScope)(int)scope.Value : null,
-            action.HasValue ? (AccessPermissions.Domain.Enums.PermissionAction)(int)action.Value : null,
-            type.HasValue ? (AccessPermissions.Domain.Enums.PermissionType)(int)type.Value : null);
+            scope.HasValue ? (PermissionScope)(int)scope.Value : null,
+            action.HasValue ? (PermissionAction)(int)action.Value : null,
+            type.HasValue ? (PermissionType)(int)type.Value : null);
 
         var result = await _sender.Send(query, cancellationToken);
         if (!result.IsSuccess)
@@ -118,7 +139,7 @@ public class AccessPermissionsController : ControllerBase
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return Ok(result.Value?.ToList() ?? new List<AccessPermissionDto>());
+        return Ok(result.Value?.ToList() ?? new List<AccessPermissionResponse>());
     }
 
     /// <summary>
@@ -133,13 +154,12 @@ public class AccessPermissionsController : ControllerBase
     /// <response code="200">Список разрешений получен</response>
     /// <response code="500">Внутренняя ошибка сервера</response>
     [HttpGet("users/{userId:guid}")]
-    [ProducesResponseType(typeof(IEnumerable<AccessPermissionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<AccessPermissionResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<IEnumerable<AccessPermissionDto>>> GetUserPermissions(
+    public async Task<ActionResult<IEnumerable<AccessPermissionResponse>>> GetUserPermissions(
         [FromRoute] Guid userId,
-        [FromQuery] Guid tenantId,
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
         [FromQuery] Guid? projectId = null,
-        [FromQuery] Guid? taskId = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetUserPermissionsQuery(userId, tenantId, projectId);
@@ -149,7 +169,7 @@ public class AccessPermissionsController : ControllerBase
             return Problem(result.Error?.Description, statusCode: MapStatus(result.Error));
         }
 
-        return Ok(result.Value?.ToList() ?? new List<AccessPermissionDto>());
+        return Ok(result.Value?.ToList() ?? new List<AccessPermissionResponse>());
     }
 
     /// <summary>
@@ -166,13 +186,18 @@ public class AccessPermissionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Update(Guid permissionId, [FromBody] UpdateAccessPermissionRequest body, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(
+        Guid permissionId,
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
+        [FromBody] UpdateAccessPermissionRequest request,
+        CancellationToken cancellationToken)
     {
         var command = new UpdateAccessPermissionCommand(
             permissionId,
-            body.Type.HasValue ? (AccessPermissions.Domain.Enums.PermissionType?)(int)body.Type.Value : null,
-            body.ExpiresAt,
-            body.Note);
+            tenantId,
+            request.Type.HasValue ? (PermissionType?)(int)request.Type.Value : null,
+            request.ExpiresAt,
+            request.Note);
 
         var result = await _sender.Send(command, cancellationToken);
         if (!result.IsSuccess)
@@ -196,9 +221,12 @@ public class AccessPermissionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(Guid permissionId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(
+        Guid permissionId,
+        [FromHeader(Name = "X-Tenant-Id")] int tenantId,
+        CancellationToken cancellationToken)
     {
-        var command = new DeleteAccessPermissionCommand(permissionId);
+        var command = new DeleteAccessPermissionCommand(permissionId, tenantId);
         var result = await _sender.Send(command, cancellationToken);
         if (!result.IsSuccess)
         {
@@ -208,26 +236,18 @@ public class AccessPermissionsController : ControllerBase
         return NoContent();
     }
 
-    private static int? MapStatus(Common.Domain.Results.Error? error)
+    private static int? MapStatus(Error? error)
     {
         if (error == null) return 500;
         return error.Type switch
         {
-            Common.Domain.Results.ErrorType.Validation => 400,
-            Common.Domain.Results.ErrorType.Unauthorized => 401,
-            Common.Domain.Results.ErrorType.Forbidden => 403,
-            Common.Domain.Results.ErrorType.NotFound => 404,
-            Common.Domain.Results.ErrorType.Conflict => 409,
+            ErrorType.Validation => 400,
+            ErrorType.Unauthorized => 401,
+            ErrorType.Forbidden => 403,
+            ErrorType.NotFound => 404,
+            ErrorType.Conflict => 409,
             _ => 500
         };
     }
 }
-
-/// <summary>
-/// Запрос на обновление разрешения доступа
-/// </summary>
-public record UpdateAccessPermissionRequest(
-    PermissionTypeContract? Type = null,
-    DateTime? ExpiresAt = null,
-    string? Note = null);
 
