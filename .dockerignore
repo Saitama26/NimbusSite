@@ -1,0 +1,66 @@
+# Build results
+**/bin/
+**/obj/
+**/out/
+**/.vs/
+**/.vscode/
+**/.idea/
+
+# NuGet
+**/packages/
+**/*.nupkg
+**/*.snupkg
+**/project.lock.json
+**/project.fragment.lock.json
+**/artifacts/
+
+# Test results
+**/TestResults/
+**/coverage/
+**/*.trx
+**/*.coverage
+**/*.coveragexml
+
+# Git
+**/.git/
+**/.gitignore
+**/.gitattributes
+
+# Environment
+**/.env
+**/.env.local
+**/.env.*.local
+
+# IDE
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/*.swn
+**/*.suo
+**/*.user
+**/*.userosscache
+**/*.sln.docstates
+
+# OS
+**/.DS_Store
+**/Thumbs.db
+**/Desktop.ini
+
+# Logs
+**/logs/
+**/*.log
+
+# Temporary files
+**/tmp/
+**/temp/
+**/*.tmp
+
+# Documentation
+**/README.md
+**/docs/
+
+# Migrations (optional - можно включить если нужны)
+# **/Migrations/
+

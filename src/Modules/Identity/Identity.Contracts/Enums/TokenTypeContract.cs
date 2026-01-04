@@ -1,0 +1,28 @@
+namespace Identity.Contracts.Enums;
+
+/// <summary>
+/// Тип токена аутентификации (публичный enum для API и Events)
+/// </summary>
+public enum TokenTypeContract
+{
+    /// <summary>
+    /// Access токен (краткосрочный)
+    /// </summary>
+    Access = 0,
+
+    /// <summary>
+    /// Refresh токен (долгосрочный)
+    /// </summary>
+    Refresh = 1,
+
+    /// <summary>
+    /// Токен для сброса пароля
+    /// </summary>
+    PasswordReset = 2,
+
+    /// <summary>
+    /// Токен для подтверждения email
+    /// </summary>
+    EmailConfirmation = 3
+}
+
